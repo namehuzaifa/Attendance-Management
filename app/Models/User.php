@@ -23,8 +23,12 @@ class User extends Authenticatable
         'email',
         'phone',
         'password',
+        'office_start_time',
+        'office_end_time',
+        'role',
+        'is_active',
         'otp',
-        'otp_expires_at'
+        'otp_expires_at',
     ];
 
     /**
@@ -45,6 +49,23 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'office_start_time' => 'datetime:H:i',
+        'office_end_time' => 'datetime:H:i',
     ];
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
 
 }
