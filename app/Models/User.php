@@ -18,14 +18,14 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
+        'full_name',
         'email',
         'phone',
         'password',
+        'user_role',
         'office_start_time',
         'office_end_time',
-        'role',
+        'email_verified_at',
         'is_active',
         'otp',
         'otp_expires_at',
@@ -52,6 +52,16 @@ class User extends Authenticatable
         'office_start_time' => 'datetime:H:i',
         'office_end_time' => 'datetime:H:i',
     ];
+
+    public function relation()
+    {
+        return $this->hasOne(UserRelation::class);
+    }
+
+    public function managerOf()
+    {
+        return $this->hasMany(UserRelation::class, 'manager_id');
+    }
 
     public function attendances()
     {
