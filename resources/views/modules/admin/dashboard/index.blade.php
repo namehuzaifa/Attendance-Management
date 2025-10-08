@@ -294,6 +294,7 @@
                                             <div class="col-6">
 
 
+                                                {{-- @dd($attendanceToday) --}}
                                                @if($checkInAvailable && !$attendanceToday)
                                                     <form action="{{ route('attendance.checkin') }}" method="POST">
                                                             @csrf

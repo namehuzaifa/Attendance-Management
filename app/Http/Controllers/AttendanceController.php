@@ -68,10 +68,17 @@ class AttendanceController extends Controller
             ->where('date', $today)
             ->first();
 
+        if (!$attendance) {
+            $yesterday = now()->subDay()->toDateString();
+            $attendance = Attendance::where('user_id', $user->id)
+                ->where('date', $yesterday)
+                ->first();
+        }
+
         if (!$attendance || !$attendance->check_in) {
             // return response()->json(['error' => 'Must check in first'], 400);
             redirect()->back()->with([
-                'message' => 'Must check in first',
+                'message' => 'You must check in first before checking out.',
                 'status' => 'failed'
             ]);
         }
@@ -84,40 +91,83 @@ class AttendanceController extends Controller
             ]);
         }
 
-        $checkOutTime = now()->format('H:i:s');
-        $attendance->check_out = $checkOutTime;
-        // $attendance->update(['check_out' => $checkOutTime]);
+            // 🟢 Step 5: Check-out time set karo
+        $checkOutTime = now();
+        $attendance->check_out = $checkOutTime->format('H:i:s');
 
-            // calculate working hours
+        // 🟢 Step 6: Status update karo based on early out / short hour
         $shift = $user->relation->shiftTiming;
         $startTime = Carbon::parse($shift->start_time);
         $endTime = Carbon::parse($shift->end_time);
+
+        // Agar shift end next day me hai (e.g. 01:00 AM), to end time ko +1 day karo
+        if ($endTime->lessThan($startTime)) {
+            $endTime->addDay();
+        }
+
         $checkIn = Carbon::parse($attendance->check_in);
-        $checkOut = Carbon::parse($checkOutTime);
+        if ($checkIn->greaterThan($endTime)) {
+            $checkIn->subDay(); // midnight shift ke liye adjust
+        }
+
+        $checkOut = $checkOutTime;
 
         $totalShiftMinutes = $startTime->diffInMinutes($endTime);
         $workedMinutes = $checkIn->diffInMinutes($checkOut);
 
         $newStatus = $attendance->status;
 
-        // Check for early checkout
+        // ⏰ Early out
         if ($checkOut->lt($endTime)) {
             $newStatus .= ' | early out';
         }
 
-        // Check for short working hours
-        if ($workedMinutes < $totalShiftMinutes - 15) { // allow 15 min grace
+        // 🕒 Short working hours (15 min grace)
+        if ($workedMinutes < $totalShiftMinutes - 15) {
             $newStatus .= ' | short hour';
         }
 
-        $attendance->status = $newStatus;
+        $attendance->status = trim($newStatus, ' |');
         $attendance->save();
 
         return redirect()->back()->with([
             'message' => 'Checked out successfully',
-            'status' => 'success',
-            // 'time' => $checkOutTime
+            'status' => 'success'
         ]);
+
+        // $checkOutTime = now()->format('H:i:s');
+        // $attendance->check_out = $checkOutTime;
+
+        //     // calculate working hours
+        // $shift = $user->relation->shiftTiming;
+        // $startTime = Carbon::parse($shift->start_time);
+        // $endTime = Carbon::parse($shift->end_time);
+        // $checkIn = Carbon::parse($attendance->check_in);
+        // $checkOut = Carbon::parse($checkOutTime);
+
+        // $totalShiftMinutes = $startTime->diffInMinutes($endTime);
+        // $workedMinutes = $checkIn->diffInMinutes($checkOut);
+
+        // $newStatus = $attendance->status;
+
+        // // Check for early checkout
+        // if ($checkOut->lt($endTime)) {
+        //     $newStatus .= ' | early out';
+        // }
+
+        // // Check for short working hours
+        // if ($workedMinutes < $totalShiftMinutes - 15) { // allow 15 min grace
+        //     $newStatus .= ' | short hour';
+        // }
+
+        // $attendance->status = $newStatus;
+        // $attendance->save();
+
+        // return redirect()->back()->with([
+        //     'message' => 'Checked out successfully',
+        //     'status' => 'success',
+        //     // 'time' => $checkOutTime
+        // ]);
     }
 
     private function determineStatus($user, $checkInTime)

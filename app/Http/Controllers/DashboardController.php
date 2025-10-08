@@ -19,6 +19,10 @@ class DashboardController extends Controller
             $now = Carbon::now();
             $today = Carbon::today();
 
+            if ($shiftEnd->lessThan($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
             $checkInAvailable = $now->between($shiftStart->subHours(2), $shiftEnd);
             $checkOutAvailable = $now->greaterThan($shiftStart) && $now->lessThanOrEqualTo($shiftEnd->addHours(4));
             $attendanceToday = Attendance::where('user_id', Auth::user()->id)->whereDate('date', $today)->first();
