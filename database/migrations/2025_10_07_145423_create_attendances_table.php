@@ -25,7 +25,7 @@ return new class extends Migration
             $table->datetime('check_out')->nullable();
 
             // Status fields (optional)
-            $table->enum('status', ['present', 'absent', 'late', 'half-day'])->default('present');
+            $table->string('status')->default('on time');
             $table->text('notes')->nullable();
 
             $table->timestamps();
