@@ -41,8 +41,8 @@ Route::middleware('auth')->group(function () {
         Route::get('user-create', 'create')->name('user-create')->middleware(['auth', 'Allow:admin']);
         Route::post('user-create', 'store')->name('user-store')->middleware(['auth', 'Allow:admin']);
 
-        Route::get('user-edit/{id}', 'edit')->name('user-edit')->middleware(['auth', 'Allow:admin']);
-        Route::post('user-update/{id}', 'update')->name('user-update')->middleware(['auth', 'Allow:admin']);
+        Route::get('user-edit/{id}', 'edit')->name('user-edit')->middleware(['auth',]);
+        Route::post('user-update/{id}', 'update')->name('user-update')->middleware(['auth',]);
 
         Route::get('user-list', 'index')->name('user-list')->middleware(['auth', 'Allow:admin']);
         Route::get('user-delete/{id}', 'destroy')->name('user-delete')->middleware(['auth', 'Allow:admin']);
@@ -67,6 +67,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/designation-create', 'store')->name('designation-store')->middleware(['auth', 'Allow:admin']);
         Route::post('/designation-update/{id}', 'update')->name('designation-update')->middleware(['auth', 'Allow:admin']);
         Route::get('/designation-delete', 'destroy')->name('designation-delete')->middleware(['auth', 'Allow:admin']);
+    });
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');;
+        Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.checkin');
+        Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.checkout');
+        Route::put('/attendance/{id}', [AttendanceController::class, 'updateAttendance']);
+    });
+
+    Route::middleware(['auth', 'Allow:admin'])->group(function () {
+        Route::get('/admin/attendance-reports', [AttendanceController::class, 'adminReports'])->name('admin.reports');;
+
     });
 
 // Route::middleware('auth')->group(function () {

@@ -21,7 +21,7 @@ class AttendanceController extends Controller
             ->orderBy('date', 'desc')
             ->paginate(31);
 
-        return view('attendance.index', compact('attendances', 'month'));
+        return view('modules.admin.attendance.list', compact('attendances', 'month'));
     }
 
     public function checkIn(Request $request)
@@ -35,7 +35,10 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance && $attendance->check_in) {
-            return response()->json(['error' => 'Already checked in today'], 400);
+            redirect()->back()->with([
+                'message' => 'Already checked in today',
+                'status' => 'failed'
+            ]);
         }
 
         $checkInTime = now()->format('H:i:s');
@@ -49,11 +52,11 @@ class AttendanceController extends Controller
             ]
         );
 
-        return response()->json([
+        return redirect()->back()->with([
             'message' => 'Checked in successfully',
-            'time' => $checkInTime,
-            'status' => $attendance->status
+            'status' => 'success'
         ]);
+
     }
 
     public function checkOut(Request $request)
@@ -66,37 +69,72 @@ class AttendanceController extends Controller
             ->first();
 
         if (!$attendance || !$attendance->check_in) {
-            return response()->json(['error' => 'Must check in first'], 400);
+            // return response()->json(['error' => 'Must check in first'], 400);
+            redirect()->back()->with([
+                'message' => 'Must check in first',
+                'status' => 'failed'
+            ]);
         }
 
         if ($attendance->check_out) {
-            return response()->json(['error' => 'Already checked out'], 400);
+            // return response()->json(['error' => 'Already checked out'], 400);
+            redirect()->back()->with([
+                'message' => 'Already checked out',
+                'status' => 'failed'
+            ]);
         }
 
         $checkOutTime = now()->format('H:i:s');
-        $attendance->update(['check_out' => $checkOutTime]);
+        $attendance->check_out = $checkOutTime;
+        // $attendance->update(['check_out' => $checkOutTime]);
 
-        return response()->json([
+            // calculate working hours
+        $shift = $user->relation->shiftTiming;
+        $startTime = Carbon::parse($shift->start_time);
+        $endTime = Carbon::parse($shift->end_time);
+        $checkIn = Carbon::parse($attendance->check_in);
+        $checkOut = Carbon::parse($checkOutTime);
+
+        $totalShiftMinutes = $startTime->diffInMinutes($endTime);
+        $workedMinutes = $checkIn->diffInMinutes($checkOut);
+
+        $newStatus = $attendance->status;
+
+        // Check for early checkout
+        if ($checkOut->lt($endTime)) {
+            $newStatus .= ' | early out';
+        }
+
+        // Check for short working hours
+        if ($workedMinutes < $totalShiftMinutes - 15) { // allow 15 min grace
+            $newStatus .= ' | short hour';
+        }
+
+        $attendance->status = $newStatus;
+        $attendance->save();
+
+        return redirect()->back()->with([
             'message' => 'Checked out successfully',
-            'time' => $checkOutTime
+            'status' => 'success',
+            // 'time' => $checkOutTime
         ]);
     }
 
     private function determineStatus($user, $checkInTime)
     {
-        $graceTime = 30; // 30 minutes
-        $officeStart = $user->office_start_time;
+        $graceTime =  $user->relation->shiftTiming->grace_period ?? 0; // 30 minutes
+        $officeStart = $user->relation->shiftTiming->start_time;
 
         $lateThreshold = Carbon::parse($officeStart)->addMinutes($graceTime);
         $checkIn = Carbon::parse($checkInTime);
 
-        return $checkIn->gt($lateThreshold) ? 'late' : 'present';
+        return $checkIn->gt($lateThreshold) ? 'late' : 'on time';
     }
 
     // Admin Methods
-    public function adminIndex(Request $request)
+    public function adminReports(Request $request)
     {
-        $this->authorize('admin');
+        // $this->authorize('admin');
 
         $month = $request->get('month', now()->format('Y-m'));
         $userId = $request->get('user_id');
@@ -110,9 +148,9 @@ class AttendanceController extends Controller
         }
 
         $attendances = $query->orderBy('date', 'desc')->paginate(50);
-        $users = User::where('role', 'employee')->get();
+        $users = User::where('user_role', 'user')->get();
 
-        return view('admin.attendance.index', compact('attendances', 'users', 'month', 'userId'));
+        return view('modules.admin.attendance.admin-list', compact('attendances', 'users', 'month', 'userId'));
     }
 
     public function editAttendance(Request $request, $id)

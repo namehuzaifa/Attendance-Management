@@ -295,11 +295,17 @@
 
 
                                                @if($checkInAvailable && !$attendanceToday)
-                                                    <a href="" class="btn btn-primary waves-effect waves-float waves-light">Check In</a>
+                                                    <form action="{{ route('attendance.checkin') }}" method="POST">
+                                                            @csrf
+                                                            <button class="btn btn-primary waves-effect waves-float waves-light">Check In</button>
+                                                    </form>
                                                 @endif
 
                                                 @if($checkOutAvailable && $attendanceToday && !$attendanceToday->check_out)
-                                                    <a href="" class="btn btn-primary waves-effect waves-float waves-light">Check Out</a>
+                                                    <form action="{{ route('attendance.checkout') }}" method="POST">
+                                                            @csrf
+                                                        <button class="btn btn-primary waves-effect waves-float waves-light">Check Out</button>
+                                                    </form>
                                                 @endif
                                             </div>
                                         </div>

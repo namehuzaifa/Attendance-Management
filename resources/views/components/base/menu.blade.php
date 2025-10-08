@@ -223,6 +223,13 @@
                         </a>
                     </li>
 
+                    <li class="{{ navActive(['admin.reports']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('admin.reports') }}">
+                            <i data-feather='users'></i>
+                            <span class="menu-title text-truncate" data-i18n="Invoice">Attendance Reports</span>
+                        </a>
+                    </li>
+
                 @endif
 
                 @if (auth()->user()->user_role == "user")
@@ -231,6 +238,13 @@
                         <a class="d-flex align-items-center" href="{{ route('user-edit', auth()->user()->id) }}">
                             <i data-feather='user'></i>
                             <span class="menu-title text-truncate" data-i18n="Dashboards">Profile</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item {{ navActive(['attendance.index']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('attendance.index') }}">
+                            <i data-feather='user'></i>
+                            <span class="menu-title text-truncate" data-i18n="Dashboards">In Out Time</span>
                         </a>
                     </li>
 
