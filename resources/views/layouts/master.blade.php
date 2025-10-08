@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
+    <script>
+        // Replace 'your-element-id' with the actual ID of your HTML element
+        var element = document.querySelector('html');
+        element.classList.add(localStorage.getItem('light-layout-current-skin'));
+    </script>
+
     @include('components.base.head')
     @yield('style')
 
