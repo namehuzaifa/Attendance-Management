@@ -293,6 +293,7 @@
                                             </div>
                                             <div class="col-6">
 
+                                                {{-- <h4 class="card-title mb-1">Your Shift timing</h4> --}}
 
                                                 {{-- @dd($attendanceToday) --}}
                                                @if($checkInAvailable && !$attendanceToday)
@@ -300,13 +301,26 @@
                                                             @csrf
                                                             <button class="btn btn-primary waves-effect waves-float waves-light">Check In</button>
                                                     </form>
+
+                                                @elseif($attendanceToday?->check_in)
+                                                    {{-- <h4 class="card-title mb-1">Check In today</h4> --}}
+                                                    <div class="font-small-4">Check In today</div>
+                                                    <h5 class="mb-1"> {{ $attendanceToday?->check_in?->format('h:i:s a') }}</h5>
                                                 @endif
 
                                                 @if($checkOutAvailable && $attendanceToday && !$attendanceToday->check_out)
+
                                                     <form action="{{ route('attendance.checkout') }}" method="POST">
                                                             @csrf
                                                         <button class="btn btn-primary waves-effect waves-float waves-light">Check Out</button>
                                                     </form>
+
+                                                @elseif($attendanceToday?->check_out)
+
+                                                    {{-- <h4 class="card-title mb-1">Check Out today</h4> --}}
+                                                    <div class="font-small-4">Check Out today</div>
+                                                    <h5 class="mb-1"> {{ $attendanceToday?->check_out?->format('h:i:s a') }}</h5>
+
                                                 @endif
                                             </div>
                                         </div>

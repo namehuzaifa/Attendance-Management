@@ -21,10 +21,13 @@ class DashboardController extends Controller
 
             if ($shiftEnd->lessThan($shiftStart)) {
                 $shiftEnd->addDay();
+                $today = $today->subDay();
             }
 
+            // dd($shiftEnd);
             $checkInAvailable = $now->between($shiftStart->subHours(2), $shiftEnd);
-            $checkOutAvailable = $now->greaterThan($shiftStart) && $now->lessThanOrEqualTo($shiftEnd->addHours(4));
+            // $checkOutAvailable = $now->greaterThan($shiftStart) && $now->lessThanOrEqualTo($shiftEnd->addHours(4));
+            $checkOutAvailable =  $now->lessThanOrEqualTo($shiftEnd->addHours(4));
             $attendanceToday = Attendance::where('user_id', Auth::user()->id)->whereDate('date', $today)->first();
 
             return view('modules.admin.dashboard.index', compact('checkInAvailable', 'checkOutAvailable', 'attendanceToday'));

@@ -106,7 +106,7 @@
                             <table class="datatables-basic table">
                                 <thead>
                                     <tr>
-                                        <th>Id</th>
+                                        <th>Sr. No</th>
                                         <th>Date</th>
                                         <th>Check In</th>
                                         <th>Check Out</th>
@@ -119,9 +119,9 @@
                                     @foreach ($attendances as $timing)
                                         <tr>
                                             <td>{{ $timing->id }}</td>
-                                            <td class="cat_name">{{ $timing->date->format('d-M-Y') }}</td>
-                                            <td>{{ $timing?->check_in?->format('h:i a') }}</td>
-                                            <td>{{ $timing?->check_out?->format('h:i a') ?? '- - - ' }}</td>
+                                            <td class="cat_name">{{ $timing->date }}</td>
+                                            <td>{{ $timing?->check_in ?? '- - - ' }}</td>
+                                            <td>{{ $timing?->check_out ?? '- - - ' }}</td>
                                             <td>{{ $timing->status }}</td>
                                             {{-- <td> --}}
 
@@ -214,7 +214,7 @@
         }
         var table = $('.datatables-basic').DataTable({
 
-           order: [[1, 'asc']],
+           order: [[0, 'asc']],
             dom:
                 '<"d-flex justify-content-between align-items-center header-actions mx-2 row mt-75"' +
                 '<"col-sm-12 col-lg-4 d-flex justify-content-center justify-content-lg-start" l>' +

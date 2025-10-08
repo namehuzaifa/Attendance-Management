@@ -21,8 +21,8 @@ return new class extends Migration
             $table->date('date');
 
             // Check-in and Check-out
-            $table->time('check_in')->nullable();
-            $table->time('check_out')->nullable();
+            $table->datetime('check_in')->nullable();
+            $table->datetime('check_out')->nullable();
 
             // Status fields (optional)
             $table->enum('status', ['present', 'absent', 'late', 'half-day'])->default('present');
