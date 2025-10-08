@@ -13,9 +13,9 @@ class DashboardController extends Controller
 
         if (Auth::user()->user_role == 'user') {
 
-            $userRelation = Auth::user()->relation; // jisme shift timing hai
-            $shiftStart = Carbon::parse($userRelation->shiftTiming->start_time);
-            $shiftEnd   = Carbon::parse($userRelation->shiftTiming->end_time);
+            $userRelation = Auth::user()?->relation; // jisme shift timing hai
+            $shiftStart = Carbon::parse($userRelation?->shiftTiming?->start_time);
+            $shiftEnd   = Carbon::parse($userRelation?->shiftTiming?->end_time);
             $now = Carbon::now();
             $today = Carbon::today();
 
