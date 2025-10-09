@@ -101,7 +101,7 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance && $attendance->check_in) {
-            redirect()->back()->with([
+            return redirect()->back()->with([
                 'message' => 'Already checked in today',
                 'status' => 'failed'
             ]);
@@ -143,7 +143,7 @@ class AttendanceController extends Controller
 
         if (!$attendance || !$attendance->check_in) {
             // return response()->json(['error' => 'Must check in first'], 400);
-            redirect()->back()->with([
+            return redirect()->back()->with([
                 'message' => 'You must check in first before checking out.',
                 'status' => 'failed'
             ]);
@@ -151,7 +151,7 @@ class AttendanceController extends Controller
 
         if ($attendance->check_out) {
             // return response()->json(['error' => 'Already checked out'], 400);
-            redirect()->back()->with([
+            return redirect()->back()->with([
                 'message' => 'Already checked out',
                 'status' => 'failed'
             ]);
