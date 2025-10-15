@@ -145,8 +145,7 @@ class UsersController extends Controller
             User::where('id', $id)->update($requestFiltered);
 
             if ($request->user_role == 'user') {
-                UserRelation::update([
-                    'user_id' => $id,
+                UserRelation::where('user_id', $id)->update([
                     'department_id' => $request->department_id,
                     'designation_id' => $request->designation_id,
                     'shift_timing_id' => $request->shift_timing_id,
@@ -156,10 +155,10 @@ class UsersController extends Controller
             // User_metas::where('id', $id)->update($request->except('_token','name','email','password'));
 
 
-            return redirect()->route('user-list')->with(['status' => 'success', 'message' => "User update successfully"]);
+            return redirect()->back()->with(['status' => 'success', 'message' => "User update successfully"]);
 
         } catch (\Exception $e) {
-            return redirect()->route('user-list')->with(['status' => 'failed', 'message' => $e->getMessage() ]);
+            return redirect()->back()->with(['status' => 'failed', 'message' => $e->getMessage() ]);
         }
     }
 
