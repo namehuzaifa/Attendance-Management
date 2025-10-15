@@ -145,7 +145,7 @@ class UsersController extends Controller
             User::where('id', $id)->update($requestFiltered);
 
             if ($request->user_role == 'user') {
-                UserRelation::create([
+                UserRelation::update([
                     'user_id' => $id,
                     'department_id' => $request->department_id,
                     'designation_id' => $request->designation_id,

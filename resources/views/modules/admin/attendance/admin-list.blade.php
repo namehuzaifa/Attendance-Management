@@ -107,6 +107,7 @@
                                 <thead>
                                     <tr>
                                         <th>Id</th>
+                                        <th>User</th>
                                         <th>Date</th>
                                         <th>Check In</th>
                                         <th>Check Out</th>
@@ -119,6 +120,7 @@
                                     @foreach ($attendances as $timing)
                                         <tr>
                                             <td>{{ $timing->id }}</td>
+                                            <td>{{ $timing?->user?->full_name }}</td>
                                             <td class="cat_name">{{ $timing->date->format('d-M-Y') }}</td>
                                             <td>{{ $timing?->check_in?->format('h:i a') }}</td>
                                             <td>{{ $timing?->check_out?->format('h:i a') ?? '- - - ' }}</td>
