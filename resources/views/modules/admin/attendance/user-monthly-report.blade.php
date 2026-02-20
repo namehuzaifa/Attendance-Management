@@ -201,12 +201,12 @@
 
             {{-- Short Hours --}}
             @if($totalShortMins > 0)
-            <div class="col-6 col-md-2">
+            {{-- <div class="col-6 col-md-2">
                 <div class="summary-card bg-short">
                     <div class="num" style="font-size:1.35rem;">{{ fmtMins($totalShortMins) }}</div>
                     <div class="lbl">Total Short</div>
                 </div>
-            </div>
+            </div> --}}
             @endif
 
         </div>

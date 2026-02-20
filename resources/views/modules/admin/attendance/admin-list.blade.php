@@ -100,7 +100,32 @@
                     <!-- list and filter start -->
                     <div class="card">
                         <div class="card-body border-bottom">
-                            <h4 class="card-title">Shift Timing</h4>
+                            <h4 class="card-title">Attendance Reports</h4>
+                            <form method="GET" action="{{ route('admin.reports') }}" class="row gx-1 gy-1 align-items-end mt-1">
+                                <div class="col-md-3">
+                                    <label class="form-label">Date Filter</label>
+                                    <input type="date" name="date" class="form-control" value="{{ $date ?? '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Employee</label>
+                                    <select name="user_id" class="form-select">
+                                        <option value="">All Employees</option>
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->id }}" {{ isset($userId) && $userId == $user->id ? 'selected' : '' }}>
+                                                {{ $user->full_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i data-feather="filter"></i> Filter
+                                    </button>
+                                </div>
+                                <div class="col-md-2">
+                                    <a href="{{ route('admin.reports') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                                </div>
+                            </form>
                         </div>
                         <div class="card-datatable table-responsive pt-0">
                             <table class="datatables-basic table">
@@ -140,6 +165,9 @@
                                   @endforeach
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="card-footer d-flex justify-content-end">
+                            {{ $attendances->links() }}
                         </div>
                     </div>
                     <!-- list and filter end -->

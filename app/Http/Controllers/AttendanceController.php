@@ -18,7 +18,7 @@ class AttendanceController extends Controller
 
         // $shift = $user->shiftTiming; // Relation banani hogi User → ShiftTiming
         // $offDays = $shift && $shift->off_days ? json_decode($shift->off_days, true) : [];
-        $offDays = ['Sunday'];
+        $offDays = ['Sunday', 'Saturday'];
 
         $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
         $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
@@ -254,14 +254,23 @@ class AttendanceController extends Controller
     {
         // $this->authorize('admin');
 
-        $month = $request->get('month', now()->format('Y-m'));
         $userId = $request->get('user_id');
+        $date   = $request->get('date');
+        $month  = $request->get('month');
 
-        $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
-        $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
+        $query = Attendance::with('user');
 
-        $query = Attendance::with('user')
-            ->whereBetween('date', [$startOfMonth, $endOfMonth]);
+        if ($date) {
+            $query->whereDate('date', $date);
+        } elseif ($month) {
+            $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
+            $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
+            $query->whereBetween('date', [$startOfMonth, $endOfMonth]);
+        } else {
+            // Default to today if no date or month filter
+            $date = now()->toDateString();
+            $query->whereDate('date', $date);
+        }
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -270,7 +279,7 @@ class AttendanceController extends Controller
         $attendances = $query->orderBy('date', 'desc')->paginate(50)->appends($request->except('page'));
         $users = User::where('user_role', 'user')->get();
 
-        return view('modules.admin.attendance.admin-list', compact('attendances', 'users', 'month', 'userId'));
+        return view('modules.admin.attendance.admin-list', compact('attendances', 'users', 'date', 'month', 'userId'));
     }
 
     public function userMonthlyReport(Request $request)
@@ -284,7 +293,7 @@ class AttendanceController extends Controller
         $selectedUserId = $request->get('user_id');
         $selectedYear   = $request->get('year', now()->year);
         $selectedMonth  = $request->get('month');
-        $offDays        = ['Sunday'];
+        $offDays        = ['Sunday', 'Saturday'];
 
         if ($selectedUserId) {
             $selectedUser = User::find($selectedUserId);
@@ -397,7 +406,7 @@ class AttendanceController extends Controller
         $startOfMonth  = Carbon::parse($selectedMonth . '-01')->startOfMonth();
         $endOfMonth    = Carbon::parse($selectedMonth . '-01')->endOfMonth();
 
-        $offDays = ['Sunday'];
+        $offDays = ['Sunday', 'Saturday'];
         $period  = CarbonPeriod::create($startOfMonth, min($endOfMonth, now()));
         $totalWorkingDays = 0;
         foreach ($period as $d) {
