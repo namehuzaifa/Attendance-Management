@@ -24,16 +24,4 @@ class Attendance extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function isLate()
-    {
-        if (!$this->check_in) return false;
-
-        $graceTime = 30; // 30 minutes grace period
-        $officeStart = $this->user->office_start_time;
-        $checkInTime = $this->check_in;
-
-        $lateThreshold = strtotime($officeStart) + ($graceTime * 60);
-
-        return strtotime($checkInTime) > $lateThreshold;
-    }
 }

@@ -225,9 +225,30 @@
 
                     <li class="{{ navActive(['admin.reports']) }}">
                         <a class="d-flex align-items-center" href="{{ route('admin.reports') }}">
-                            <i data-feather='users'></i>
+                            <i data-feather='clipboard'></i>
                             <span class="menu-title text-truncate" data-i18n="Invoice">Attendance Reports</span>
                         </a>
+                    </li>
+
+                    <li class="nav-item {{ navActive(['monthly.user-report','monthly.all-users-report']) }}">
+                        <a class="d-flex align-items-center" href="#">
+                            <i data-feather='bar-chart-2'></i>
+                            <span class="menu-title text-truncate">Monthly Reports</span>
+                        </a>
+                        <ul class="menu-content">
+                            <li class="{{ navActive(['monthly.user-report']) }}">
+                                <a class="d-flex align-items-center" href="{{ route('monthly.user-report') }}">
+                                    <i data-feather="circle"></i>
+                                    <span class="menu-item text-truncate">User Report</span>
+                                </a>
+                            </li>
+                            <li class="{{ navActive(['monthly.all-users-report']) }}">
+                                <a class="d-flex align-items-center" href="{{ route('monthly.all-users-report') }}">
+                                    <i data-feather="circle"></i>
+                                    <span class="menu-item text-truncate">All Employees</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                 @endif

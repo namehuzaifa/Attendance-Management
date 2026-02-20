@@ -62,6 +62,7 @@
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Role</th>
+                                            <th>Shift Time</th>
                                             <th>Create Date</th>
                                             <th>Action</th>
                                         </tr>
@@ -82,6 +83,7 @@
                                             </td>
                                             <td>{{ $user->email }}</td>
                                             <td>{{ $user->user_role }}</td>
+                                            <td>{{ $user?->relation?->shiftTiming->start_time->format('h:i a') }} - {{ $user?->relation?->shiftTiming->end_time->format('h:i a') }}</td>
                                             <td>{{ $user->created_at->format('d-M-Y') }}</td>
                                             <td>
                                                 {{-- <a href="{{ route('app-user-detail', $user->id) }}" class="">

@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
-    return view('welcome');
 })->name('home');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -77,8 +76,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware(['auth', 'Allow:admin'])->group(function () {
-        Route::get('/admin/attendance-reports', [AttendanceController::class, 'adminReports'])->name('admin.reports');;
+        Route::get('/admin/attendance-reports', [AttendanceController::class, 'adminReports'])->name('admin.reports');
 
+        // Monthly Reports
+        Route::get('/monthly/user-report',      [AttendanceController::class, 'userMonthlyReport'])->name('monthly.user-report');
+        Route::get('/monthly/all-users-report', [AttendanceController::class, 'allUsersMonthlyReport'])->name('monthly.all-users-report');
     });
 
 // Route::middleware('auth')->group(function () {
