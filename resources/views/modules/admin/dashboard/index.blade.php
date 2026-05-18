@@ -192,19 +192,68 @@
                     }
 
                     table.table.table-bordered td {
-                        padding: 20px;
+                        padding: 12px;
                         text-align: center;
+                        vertical-align: middle;
                     }
 
                     .card-transaction .transaction-item {
                         margin-bottom: 1.5rem;
                     }
 
+                    .badge-on-time { background-color: #28c76f; color: #fff; }
+                    .badge-late { background-color: #ff9f43; color: #fff; }
+                    .badge-absent { background-color: #ea5455; color: #fff; }
+                    .badge-off-day { background-color: #00cfe8; color: #fff; }
+                    .badge-early-out { background-color: #ff6f61; color: #fff; }
+                    .badge-short-hour { background-color: #9c27b0; color: #fff; }
+
+                    .status-badge {
+                        padding: 4px 10px;
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        text-transform: capitalize;
+                        display: inline-block;
+                    }
+
+                    .stats-value {
+                        font-size: 1.3rem;
+                        font-weight: 700;
+                    }
+
+                    /* Mobile responsiveness */
+                    @media (max-width: 768px) {
+                        .transaction-item {
+                            width: 50% !important;
+                        }
+                        .col-lg-4.col-4,
+                        .col-lg-5.col-5,
+                        .col-lg-3.col-3 {
+                            width: 100% !important;
+                            flex: 0 0 100% !important;
+                            max-width: 100% !important;
+                        }
+                        .col-xl-6.col-md-6.col-6 {
+                            width: 100% !important;
+                            flex: 0 0 100% !important;
+                            max-width: 100% !important;
+                        }
+                        table.table td, table.table th {
+                            padding: 8px 6px;
+                            font-size: 0.8rem;
+                        }
+                    }
+                    @media (max-width: 480px) {
+                        .transaction-item {
+                            width: 100% !important;
+                        }
+                    }
                 </style>
                     <section id="dashboard-ecommerce">
                         <div class="row match-height">
-                            <!-- Medal Card -->
-                            <div class="col-xl-6 col-md-6 col-6">
+                            <!-- Info Card -->
+                            <div class="col-xl-6 col-md-6 col-12">
                                 <div class="card card-transaction">
                                    <div class="card-body" style="display: flex; flex-wrap: wrap; margin-top: 10px;">
                                         <div class="transaction-item">
@@ -242,7 +291,7 @@
                                                 </div>
                                                 <div class="transaction-percentage">
                                                     <h6 class="transaction-title">Designation</h6>
-                                                    <small>{{ auth()->user()?->relation?->designation?->name }} </small>
+                                                    <small>{{ auth()->user()?->relation?->designation?->name }}</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -276,26 +325,18 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-6 col-md-6 col-6">
+                            <div class="col-xl-6 col-md-6 col-12">
                                 <div class="card earnings-card">
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col-6">
                                                 <h4 class="card-title mb-1">Your Shift timing</h4>
-                                                {{-- <div class="font-small-2">This Month</div> --}}
                                                 <h5 class="mb-1">
                                                     {{ Auth::user()->relation->shiftTiming->start_time->format('h:i a') }} -
                                                     {{ Auth::user()->relation->shiftTiming->end_time->format('h:i a') }}
                                                 </h5>
-                                                {{-- <p class="card-text text-muted font-small-2">
-                                                    <span class="fw-bolder">$0</span><span> Payments last month.</span>
-                                                </p> --}}
                                             </div>
                                             <div class="col-6">
-
-                                                {{-- <h4 class="card-title mb-1">Your Shift timing</h4> --}}
-
-                                                {{-- @dd($attendanceToday) --}}
                                                @if($checkInAvailable && !$attendanceToday)
                                                     <form action="{{ route('attendance.checkin') }}" method="POST">
                                                             @csrf
@@ -303,63 +344,57 @@
                                                     </form>
 
                                                 @elseif($attendanceToday?->check_in)
-                                                    {{-- <h4 class="card-title mb-1">Check In today</h4> --}}
                                                     <div class="font-small-4">Check In today</div>
                                                     <h5 class="mb-1"> {{ $attendanceToday?->check_in?->format('h:i:s a') }}</h5>
                                                 @endif
 
                                                 @if($checkOutAvailable && $attendanceToday && !$attendanceToday->check_out)
-
                                                     <form action="{{ route('attendance.checkout') }}" method="POST">
                                                             @csrf
                                                         <button class="btn btn-primary waves-effect waves-float waves-light">Check Out</button>
                                                     </form>
 
                                                 @elseif($attendanceToday?->check_out)
-
-                                                    {{-- <h4 class="card-title mb-1">Check Out today</h4> --}}
                                                     <div class="font-small-4">Check Out today</div>
                                                     <h5 class="mb-1"> {{ $attendanceToday?->check_out?->format('h:i:s a') }}</h5>
-
                                                 @endif
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <!--/ Medal Card -->
                         </div>
 
                         <div class="row match-height">
-                            <!-- Revenue Report Card -->
-                            <div class="col-lg-4 col-4">
+                            <!-- Shift Information: Next 7 days -->
+                            <div class="col-lg-4 col-md-6 col-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4 class="card-title">Shift Information</h4>
+                                        <h4 class="card-title">Shift Information <small class="text-muted">(Next 7 Days)</small></h4>
                                     </div>
                                     <div class="card-content collapse show">
                                         <div class="card-body">
                                             <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                                <table class="table table-bordered table-sm">
                                                     <thead>
                                                         <tr>
-                                                            <th>Shift Days</th>
-                                                            <th>Start Time/End Time</th>
+                                                            <th>Day</th>
+                                                            <th>Timing</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
+                                                        @foreach ($nextWeek as $day)
                                                         <tr>
-                                                            <td>09/02/2025</td>
-                                                            <td>19:00:00/04:00:00</td>
+                                                            <td>{{ $day['date'] }}</td>
+                                                            <td>
+                                                                @if($day['is_off'])
+                                                                    <span class="status-badge badge-off-day">Off Day</span>
+                                                                @else
+                                                                    {{ $day['start_time'] }} - {{ $day['end_time'] }}
+                                                                @endif
+                                                            </td>
                                                         </tr>
-                                                        <tr>
-                                                            <td>09/03/2025</td>
-                                                            <td>19:00:00/04:00:00</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>09/03/2025</td>
-                                                            <td>19:00:00/04:00:00</td>
-                                                        </tr>
+                                                        @endforeach
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -367,42 +402,47 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-5 col-5">
+
+                            <!-- In Out Timing: Current Week -->
+                            <div class="col-lg-5 col-md-6 col-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4 class="card-title">In Out Timing</h4>
+                                        <h4 class="card-title">In Out Timing <small class="text-muted">(Last 7 Days)</small></h4>
                                     </div>
                                     <div class="card-content collapse show">
                                         <div class="card-body">
                                             <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                                <table class="table table-bordered table-sm">
                                                     <thead>
                                                         <tr>
                                                             <th>Date</th>
+                                                            <th>Status</th>
                                                             <th>In</th>
                                                             <th>Out</th>
-                                                            <th>Worked Hour</th>
+                                                            <th>Worked</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
+                                                        @foreach ($weekReport as $entry)
                                                         <tr>
-                                                            <td>8/27/2025</td>
-                                                            <td>18:20:59.0</td>
-                                                            <td>04:02:07.0</td>
-                                                            <td>09:41:08</td>
+                                                            <td>{{ $entry['date'] }}</td>
+                                                            <td>
+                                                                @php
+                                                                    $statusLower = strtolower($entry['status']);
+                                                                    $badgeClass = 'badge-on-time';
+                                                                    if(str_contains($statusLower, 'late')) $badgeClass = 'badge-late';
+                                                                    elseif(str_contains($statusLower, 'absent')) $badgeClass = 'badge-absent';
+                                                                    elseif(str_contains($statusLower, 'off day')) $badgeClass = 'badge-off-day';
+                                                                    elseif(str_contains($statusLower, 'early out')) $badgeClass = 'badge-early-out';
+                                                                    elseif(str_contains($statusLower, 'short hour')) $badgeClass = 'badge-short-hour';
+                                                                @endphp
+                                                                <span class="status-badge {{ $badgeClass }}">{{ $entry['status'] }}</span>
+                                                            </td>
+                                                            <td>{{ $entry['check_in'] ?? '-' }}</td>
+                                                            <td>{{ $entry['check_out'] ?? '-' }}</td>
+                                                            <td>{{ $entry['worked_hours'] ?? '-' }}</td>
                                                         </tr>
-                                                        <tr>
-                                                            <td>8/27/2025</td>
-                                                            <td>18:20:59.0</td>
-                                                            <td>04:02:07.0</td>
-                                                            <td>09:41:08</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>8/27/2025</td>
-                                                            <td>18:20:59.0</td>
-                                                            <td>04:02:07.0</td>
-                                                            <td>09:41:08</td>
-                                                        </tr>
+                                                        @endforeach
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -410,46 +450,51 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-3">
+
+                            <!-- Employee Stats: Current Month -->
+                            <div class="col-lg-3 col-md-6 col-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4 class="card-title">Employee Stats</h4>
+                                        <h4 class="card-title">Employee Stats <small class="text-muted">({{ now()->format('F Y') }})</small></h4>
                                     </div>
                                     <div class="card-content collapse show">
                                         <div class="card-body">
                                             <div class="table-responsive">
-                                                <table class="table table-bordered">
+                                                <table class="table table-bordered table-sm">
                                                     <thead>
                                                         <tr>
                                                             <th>Details</th>
-                                                            <th>Stats</th>
+                                                            <th>Count</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <tr>
-                                                            <td>Presents</td>
-                                                            <td>08</td>
+                                                            <td>Total Working Days</td>
+                                                            <td><span class="stats-value">{{ $employeeStats['total_working_days'] }}</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Off Days</td>
-                                                            <td>04</td>
-
+                                                            <td><span class="text-success fw-bold">Presents</span></td>
+                                                            <td><span class="stats-value text-success">{{ $employeeStats['present'] }}</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Absent Days</td>
-                                                            <td>01</td>
+                                                            <td><span class="text-info fw-bold">Off Days</span></td>
+                                                            <td><span class="stats-value text-info">{{ $employeeStats['off_days'] }}</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Leaves</td>
-                                                            <td>01</td>
+                                                            <td><span class="text-danger fw-bold">Absent</span></td>
+                                                            <td><span class="stats-value text-danger">{{ $employeeStats['absent'] }}</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Late In</td>
-                                                            <td>01</td>
+                                                            <td><span style="color: #ff9f43; font-weight: bold;">Late In</span></td>
+                                                            <td><span class="stats-value" style="color: #ff9f43;">{{ $employeeStats['late'] }}</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Early Out</td>
-                                                            <td>01</td>
+                                                            <td><span style="color: #ff6f61; font-weight: bold;">Early Out</span></td>
+                                                            <td><span class="stats-value" style="color: #ff6f61;">{{ $employeeStats['early_out'] }}</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><span style="color: #9c27b0; font-weight: bold;">Short Hour</span></td>
+                                                            <td><span class="stats-value" style="color: #9c27b0;">{{ $employeeStats['short_hour'] }}</span></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -458,7 +503,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!--/ Revenue Report Card -->
                         </div>
                     </section>
 
