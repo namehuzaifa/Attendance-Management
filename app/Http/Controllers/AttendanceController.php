@@ -16,9 +16,8 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $month = $request->get('month', now()->format('Y-m'));
 
-        // $shift = $user->shiftTiming; // Relation banani hogi User → ShiftTiming
-        // $offDays = $shift && $shift->off_days ? json_decode($shift->off_days, true) : [];
-        $offDays = ['Sunday', 'Saturday'];
+        $shift = optional($user->relation)->shiftTiming;
+        $offDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
 
         $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
         $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
@@ -293,7 +292,8 @@ class AttendanceController extends Controller
         $selectedUserId = $request->get('user_id');
         $selectedYear   = $request->get('year', now()->year);
         $selectedMonth  = $request->get('month');
-        $offDays        = ['Sunday', 'Saturday'];
+        $shift = optional(optional(User::find($selectedUserId))->relation)->shiftTiming;
+        $offDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
 
         if ($selectedUserId) {
             $selectedUser = User::find($selectedUserId);
@@ -406,11 +406,13 @@ class AttendanceController extends Controller
         $startOfMonth  = Carbon::parse($selectedMonth . '-01')->startOfMonth();
         $endOfMonth    = Carbon::parse($selectedMonth . '-01')->endOfMonth();
 
-        $offDays = ['Sunday', 'Saturday'];
+        // In allUsersMonthlyReport, we'll fetch offDays per user below. 
+        // For total working days (overall), we can assume general off days.
+        $generalOffDays = ['Sunday', 'Saturday'];
         $period  = CarbonPeriod::create($startOfMonth, min($endOfMonth, now()));
         $totalWorkingDays = 0;
         foreach ($period as $d) {
-            if (!in_array($d->format('l'), $offDays)) $totalWorkingDays++;
+            if (!in_array($d->format('l'), $generalOffDays)) $totalWorkingDays++;
         }
 
         $users = User::where('user_role', 'user')
@@ -419,8 +421,16 @@ class AttendanceController extends Controller
                     'relation.shiftTiming'])
             ->get();
 
-        $usersReport = $users->map(function ($user) use ($totalWorkingDays, $offDays, $startOfMonth, $endOfMonth) {
+        $usersReport = $users->map(function ($user) use ($period, $startOfMonth, $endOfMonth) {
             $attendances = $user->attendances->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
+
+            $shift      = optional($user->relation)->shiftTiming;
+            $userOffDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
+            
+            $totalWorkingDays = 0;
+            foreach ($period as $d) {
+                if (!in_array($d->format('l'), $userOffDays)) $totalWorkingDays++;
+            }
 
             $presentDays = $absentDays = $lateDays = $totalWorkedMins = $totalShiftMins = 0;
 
@@ -430,7 +440,7 @@ class AttendanceController extends Controller
             $shiftMins  = ($shiftStart && $shiftEnd) ? $shiftStart->diffInMinutes($shiftEnd) : null;
 
             foreach (CarbonPeriod::create($startOfMonth, min($endOfMonth, now())) as $date) {
-                if (in_array($date->format('l'), $offDays)) continue;
+                if (in_array($date->format('l'), $userOffDays)) continue;
                 $dateKey = $date->format('Y-m-d');
 
                 if (isset($attendances[$dateKey])) {

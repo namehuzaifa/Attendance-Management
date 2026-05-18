@@ -17,10 +17,11 @@ class ShiftTimingController extends Controller
             'name'=>'required|string',
             'start_time'=>'required|date_format:H:i',
             'end_time'=>'required|date_format:H:i',
-            'grace_period'=>'nullable|integer|min:0'
+            'grace_period'=>'nullable|integer|min:0',
+            'off_days' => 'nullable|array',
         ]);
 
-        ShiftTiming::create($r->only('name','start_time','end_time','grace_period'));
+        ShiftTiming::create($r->only('name','start_time','end_time','grace_period', 'off_days'));
 
         return response()->json(['status' => true, 'message' => "shift added successfully"]);
 
@@ -31,12 +32,13 @@ class ShiftTimingController extends Controller
             'name'=>'required|string',
             'start_time'=>'required|date_format:H:i',
             'end_time'=>'required|date_format:H:i',
-            'grace_period'=>'nullable|integer|min:0'
+            'grace_period'=>'nullable|integer|min:0',
+            'off_days' => 'nullable|array',
         ]);
 
         $s = ShiftTiming::findOrFail($id);
-        $s->update($r->only('name','start_time','end_time','grace_period'));
-        return $s;
+        $s->update($r->only('name','start_time','end_time','grace_period', 'off_days'));
+        return response()->json(['status' => true, 'message' => "shift updated successfully"]);
     }
 
     public function destroy(Request $r) {

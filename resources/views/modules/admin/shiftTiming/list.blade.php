@@ -51,42 +51,49 @@
                             <h4 class="modal-title" id="myModalLabel33">Add New Shift Time</h4>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="add_category">
+                        <form class="add_category" id="shiftForm">
                             @csrf
+                            <input type="hidden" name="shift_id" id="shift_id">
                             <div class="modal-body row gy-1 gx-2 mt-75">
 
                                 <div class="mb-1 col-12">
                                     <label class="form-label">Shift Name*</label>
-                                    <input type="text" name="name" placeholder="morning 9:00 to 02:00" class="form-control name" />
+                                    <input type="text" name="name" id="name" placeholder="morning 9:00 to 02:00" class="form-control name" />
                                 </div>
 
                                 <div class="mb-1 col-6">
                                     <label class="form-label" for="start_time">Start Time*</label>
-                                    <input value="" name="start_time" type="text" id="st-time" class="form-control flatpickr-time text-start flatpickr-input" placeholder="HH:MM" >
+                                    <input value="" name="start_time" type="text" id="start_time" class="form-control flatpickr-time text-start flatpickr-input" placeholder="HH:MM" >
                                 </div>
 
                                 <div class="mb-1 col-6">
-                                    <label class="form-label" for="end_time">Start Time*</label>
-                                    <input value="" name="end_time" type="text" id="end-time" class="form-control flatpickr-time text-start flatpickr-input" placeholder="HH:MM" >
+                                    <label class="form-label" for="end_time">End Time*</label>
+                                    <input value="" name="end_time" type="text" id="end_time" class="form-control flatpickr-time text-start flatpickr-input" placeholder="HH:MM" >
                                 </div>
 
                                 <div class="mb-1 col-12">
-                                    <label class="form-label">Grace Period min</label>
-                                    <input type="number" name="grace_period" placeholder="30 min" class="form-control category" />
+                                    <label class="form-label">Grace Period (min)</label>
+                                    <input type="number" name="grace_period" id="grace_period" placeholder="30" class="form-control category" />
                                 </div>
 
-
-                            {{-- <div class="col-md-6">
-                                <div class="mb-1">
-                                    <label class="form-label" for="match_date">Match date*</label>
-                                        <input value="" name="match_date" type="text" id="fp-default" class="form-control flatpickr-basic flatpickr-input active" placeholder="YYYY-MM-DD">
+                                <div class="mb-1 col-12">
+                                    <label class="form-label">Off Days</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                        <div class="form-check">
+                                            <input class="form-check-input off_day_checkbox" type="checkbox" name="off_days[]" value="{{ $day }}" id="off_day_{{ $day }}">
+                                            <label class="form-check-label" for="off_day_{{ $day }}">
+                                                {{ $day }}
+                                            </label>
+                                        </div>
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div> --}}
 
 
                             </div>
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Add</button>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">Add</button>
                             </div>
                         </form>
                     </div>
@@ -111,6 +118,7 @@
                                         <th>Start Time</th>
                                         <th>End Time</th>
                                         <th>Grace Period</th>
+                                        <th>Off Days</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -123,9 +131,10 @@
                                             <td><?= $timing->start_time->format('h:i a') ?></td>
                                             <td><?= $timing->end_time->format('h:i a') ?></td>
                                             <td><?= $timing->grace_period ?> min</td>
+                                            <td><?= $timing->off_days ? implode(', ', $timing->off_days) : 'None' ?></td>
                                             <td>
 
-                                                <a href="#!" class="item-edit" data-id="<?= $timing->id ?>"  data-bs-toggle= "modal" data-bs-target= "#inlineForm" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Edit value Detail">
+                                                <a href="#!" class="item-edit" data-id="<?= $timing->id ?>" data-name="<?= $timing->name ?>" data-start_time="<?= $timing->start_time->format('H:i') ?>" data-end_time="<?= $timing->end_time->format('H:i') ?>" data-grace_period="<?= $timing->grace_period ?>" data-off_days='<?= json_encode($timing->off_days ?? []) ?>' data-bs-toggle= "modal" data-bs-target= "#inlineForm" data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Edit value Detail">
                                                     <i data-feather='edit'></i>
                                                 </a>
 
@@ -258,27 +267,22 @@
             });
         });
 
-        $(".add_category").submit(function(e) {
+        $("#shiftForm").submit(function(e) {
             e.preventDefault(); // avoid to execute the actual submit of the form.
             var form = new FormData(this);
-            // console.log('form', form);
-            $(this).find('button[type=submit]').append('<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>');
+            $(this).find('button[type=submit]').append('<i class="fa fa-spinner fa-spin ms-1"></i>');
             $(this).find('button[type=submit]').prop('disabled', true);
             var thiss = $(this);
-            // $('body').waitMe({
-            //     effect: 'bounce',
-            //     text: '',
-            //     bg: 'rgba(255,255,255,0.7)',
-            //     color: '#000',
-            //     maxSize: '',
-            //     waitTime: -1,
-            //     textPos: 'vertical',
-            //     fontSize: '',
-            //     source: '',
-            // });
+
+            var shift_id = $('#shift_id').val();
+            var url = "{{ route('shift-store') }}";
+            if (shift_id) {
+                url = "/shift-timing-update/" + shift_id;
+            }
+
             $.ajax({
                 type: 'post',
-                url: "{{ route('shift-store') }}",
+                url: url,
                 data: form,
                 dataType: 'json',
                 cache: false,
@@ -286,24 +290,18 @@
                 processData: false,
                 success: function(response) {
                     $('.fa.fa-spinner.fa-spin').remove();
-                    // $('body').waitMe('hide');
                     $(thiss).find('button[type=submit]').prop('disabled', false);
-                    //  console.log(response);
                     if (!response.status) {
                         toastr.error(response.message, "Error");
-
-
                     } else{
-                            // if (response.auto_redirect) {window.location.href = response.redirect_url;}
-                            // else{
-                                toastr.success(response.message, response.title);
-                                setTimeout(function() {window.location.reload(); }, 2000);
-                            // }
-                        }
+                        toastr.success(response.message, "Success");
+                        setTimeout(function() {window.location.reload(); }, 2000);
+                    }
                 },
                 error: function(errorThrown) {
                     console.log(errorThrown);
-                    $('body').waitMe('hide');
+                    $('.fa.fa-spinner.fa-spin').remove();
+                    $(thiss).find('button[type=submit]').prop('disabled', false);
                 }
             });
         });
@@ -312,17 +310,6 @@
             if (confirm("Are you sure?")) {
                 var id = $(this).attr('data-id');
                 var thiss = jQuery(this);
-                // jQuery('body').waitMe({
-                //     effect: 'bounce',
-                //     text: '',
-                //     bg: 'rgba(255,255,255,0.7)',
-                //     color: '#000',
-                //     maxSize: '',
-                //     waitTime: -1,
-                //     textPos: 'vertical',
-                //     fontSize: '',
-                //     source: '',
-                // });
                 jQuery.ajax({
                     type: 'get',
                     url: "{{ route('shift-delete') }}",
@@ -331,7 +318,6 @@
                     },
                     dataType: 'json',
                     success: function(response) {
-                        // jQuery('body').waitMe('hide');
                         if (!response.status) {
                             toastr.error(response.message, "Error");
                         }else {
@@ -341,7 +327,6 @@
                     },
                     error: function(errorThrown) {
                         console.log(errorThrown);
-                        jQuery('body').waitMe('hide');
                     }
                 });
             }
@@ -349,25 +334,34 @@
         });
 
         $(document).on("click", ".item-edit", function(e) {
-            var cat_name = $(this).parents('tr').find('.cat_name').text();
-            $('.category, .old_cat').val(cat_name);
-            $(".add_category").find('button[type=submit]').text('Update');
             var id = $(this).data('id');
-            let selected = clubArr[id];
-            $('#club').val(selected);
+            var name = $(this).data('name');
+            var start_time = $(this).data('start_time');
+            var end_time = $(this).data('end_time');
+            var grace_period = $(this).data('grace_period');
+            var off_days = $(this).data('off_days'); // array
 
-            // jQuery('#club').select2({
-            //     placeholder: 'Select club'
-            // });
+            $('#shift_id').val(id);
+            $('#name').val(name);
+            $('#start_time').val(start_time);
+            $('#end_time').val(end_time);
+            $('#grace_period').val(grace_period);
+
+            $('.off_day_checkbox').prop('checked', false);
+            if(off_days && Array.isArray(off_days)) {
+                off_days.forEach(function(day) {
+                    $('#off_day_' + day).prop('checked', true);
+                });
+            }
+
+            $("#shiftForm").find('button[type=submit]').text('Update');
         });
 
-        $(document).on("click", ".btn-close", function(e) {
-            $(".add_category").find('button[type=submit]').text('Add');
-             $('#club').val('');
-
-            jQuery('#club').select2({
-                placeholder: 'Select club'
-            });
+        $(document).on("click", ".btn-close, .add-new", function(e) {
+            $("#shiftForm")[0].reset();
+            $('#shift_id').val('');
+            $('.off_day_checkbox').prop('checked', false);
+            $("#shiftForm").find('button[type=submit]').text('Add');
         });
     </script>
 @endsection
