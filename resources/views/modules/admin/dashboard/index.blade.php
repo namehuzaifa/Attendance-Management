@@ -351,7 +351,7 @@
                                                 @if($checkOutAvailable && $attendanceToday && !$attendanceToday->check_out)
                                                     <form action="{{ route('attendance.checkout') }}" method="POST">
                                                             @csrf
-                                                        <button class="btn btn-primary waves-effect waves-float waves-light">Check Out</button>
+                                                        <button class="btn btn-danger waves-effect waves-float waves-light">Check Out</button>
                                                     </form>
 
                                                 @elseif($attendanceToday?->check_out)
@@ -424,20 +424,20 @@
                                                     </thead>
                                                     <tbody>
                                                         @foreach ($weekReport as $entry)
-                                                        <tr>
-                                                            <td>{{ $entry['date'] }}</td>
-                                                            <td>
-                                                                @php
-                                                                    $statusLower = strtolower($entry['status']);
-                                                                    $badgeClass = 'badge-on-time';
-                                                                    if(str_contains($statusLower, 'late')) $badgeClass = 'badge-late';
-                                                                    elseif(str_contains($statusLower, 'absent')) $badgeClass = 'badge-absent';
-                                                                    elseif(str_contains($statusLower, 'off day')) $badgeClass = 'badge-off-day';
-                                                                    elseif(str_contains($statusLower, 'early out')) $badgeClass = 'badge-early-out';
-                                                                    elseif(str_contains($statusLower, 'short hour')) $badgeClass = 'badge-short-hour';
-                                                                @endphp
-                                                                <span class="status-badge {{ $badgeClass }}">{{ $entry['status'] }}</span>
-                                                            </td>
+                                                        @php
+                                                            $statusLower = strtolower($entry['status']);
+                                                            $rowBg = '';
+                                                            if(str_contains($statusLower, 'late')) $rowBg = 'background-color: rgba(255,159,67,0.15);';
+                                                            elseif(str_contains($statusLower, 'absent')) $rowBg = 'background-color: rgba(234,84,85,0.15);';
+                                                            elseif(str_contains($statusLower, 'off day')) $rowBg = 'background-color: rgba(0,207,232,0.15);';
+                                                            elseif(str_contains($statusLower, 'early out')) $rowBg = 'background-color: rgba(255,111,97,0.15);';
+                                                            elseif(str_contains($statusLower, 'short hour')) $rowBg = 'background-color: rgba(156,39,176,0.15);';
+                                                            elseif(str_contains($statusLower, 'on time')) $rowBg = 'background-color: rgba(40,199,111,0.15);';
+                                                            if(!empty($entry['is_today'])) $rowBg .= ' font-weight: 600;';
+                                                        @endphp
+                                                        <tr style="{{ $rowBg }}">
+                                                            <td>{{ $entry['date'] }} @if(!empty($entry['is_today'])) <span class="badge bg-primary" style="font-size:0.65rem;">Today</span> @endif</td>
+                                                            <td>{{ $entry['status'] }}</td>
                                                             <td>{{ $entry['check_in'] ?? '-' }}</td>
                                                             <td>{{ $entry['check_out'] ?? '-' }}</td>
                                                             <td>{{ $entry['worked_hours'] ?? '-' }}</td>
@@ -470,31 +470,31 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Total Working Days</td>
-                                                            <td><span class="stats-value">{{ $employeeStats['total_working_days'] }}</span></td>
+                                                            <td>{{ $employeeStats['total_working_days'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span class="text-success fw-bold">Presents</span></td>
-                                                            <td><span class="stats-value text-success">{{ $employeeStats['present'] }}</span></td>
+                                                            <td>Presents</td>
+                                                            <td>{{ $employeeStats['present'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span class="text-info fw-bold">Off Days</span></td>
-                                                            <td><span class="stats-value text-info">{{ $employeeStats['off_days'] }}</span></td>
+                                                            <td>Off Days</td>
+                                                            <td>{{ $employeeStats['off_days'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span class="text-danger fw-bold">Absent</span></td>
-                                                            <td><span class="stats-value text-danger">{{ $employeeStats['absent'] }}</span></td>
+                                                            <td>Absent</td>
+                                                            <td>{{ $employeeStats['absent'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span style="color: #ff9f43; font-weight: bold;">Late In</span></td>
-                                                            <td><span class="stats-value" style="color: #ff9f43;">{{ $employeeStats['late'] }}</span></td>
+                                                            <td>Late In</td>
+                                                            <td>{{ $employeeStats['late'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span style="color: #ff6f61; font-weight: bold;">Early Out</span></td>
-                                                            <td><span class="stats-value" style="color: #ff6f61;">{{ $employeeStats['early_out'] }}</span></td>
+                                                            <td>Early Out</td>
+                                                            <td>{{ $employeeStats['early_out'] }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td><span style="color: #9c27b0; font-weight: bold;">Short Hour</span></td>
-                                                            <td><span class="stats-value" style="color: #9c27b0;">{{ $employeeStats['short_hour'] }}</span></td>
+                                                            <td>Short Hour</td>
+                                                            <td>{{ $employeeStats['short_hour'] }}</td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

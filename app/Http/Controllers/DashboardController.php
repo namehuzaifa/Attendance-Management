@@ -64,6 +64,7 @@ class DashboardController extends Controller
                 $dayName = $date->format('l');
                 $dateKey = $date->format('Y-m-d');
                 $isOff = in_array($dayName, $offDays);
+                $isToday = $date->isToday();
 
                 if ($isOff) {
                     $weekReport[] = [
@@ -72,6 +73,7 @@ class DashboardController extends Controller
                         'check_in' => null,
                         'check_out' => null,
                         'worked_hours' => null,
+                        'is_today' => $isToday,
                     ];
                 } elseif (isset($weekAttendances[$dateKey])) {
                     $rec = $weekAttendances[$dateKey];
@@ -85,6 +87,7 @@ class DashboardController extends Controller
                         'check_in' => $rec->check_in ? Carbon::parse($rec->check_in)->format('h:i A') : '-',
                         'check_out' => $rec->check_out ? Carbon::parse($rec->check_out)->format('h:i A') : '-',
                         'worked_hours' => $workedMins !== null ? floor($workedMins / 60) . 'h ' . ($workedMins % 60) . 'm' : '-',
+                        'is_today' => $isToday,
                     ];
                 } else {
                     $weekReport[] = [
@@ -93,9 +96,11 @@ class DashboardController extends Controller
                         'check_in' => '-',
                         'check_out' => '-',
                         'worked_hours' => '-',
+                        'is_today' => $isToday,
                     ];
                 }
             }
+            $weekReport = array_reverse($weekReport);
 
             // ========= Employee Stats: Current month =========
             $monthStart = Carbon::now()->startOfMonth();
@@ -105,7 +110,12 @@ class DashboardController extends Controller
                 ->get()
                 ->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
 
-            $totalWorkingDays = $presentDays = $absentDays = $lateDays = $earlyOutDays = $shortHourDays = $offDaysCount = 0;
+            $totalWorkingDays = $totalWorkingDaysFull = $presentDays = $absentDays = $lateDays = $earlyOutDays = $shortHourDays = $offDaysCount = 0;
+
+            // Calculate total working days for the FULL month
+            foreach (CarbonPeriod::create($monthStart, $monthEnd) as $d) {
+                if (!in_array($d->format('l'), $offDays)) $totalWorkingDaysFull++;
+            }
 
             foreach (CarbonPeriod::create($monthStart, min($monthEnd, now())) as $date) {
                 $dayName = $date->format('l');
@@ -131,7 +141,7 @@ class DashboardController extends Controller
             }
 
             $employeeStats = [
-                'total_working_days' => $totalWorkingDays,
+                'total_working_days' => $totalWorkingDaysFull,
                 'present' => $presentDays,
                 'off_days' => $offDaysCount,
                 'absent' => $absentDays,
