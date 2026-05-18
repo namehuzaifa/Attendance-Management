@@ -223,6 +223,13 @@
                         </a>
                     </li>
 
+                    <li class="{{ navActive(['ip-list']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('ip-list') }}">
+                            <i data-feather='shield'></i>
+                            <span class="menu-title text-truncate" data-i18n="Invoice">IP Restriction</span>
+                        </a>
+                    </li>
+
                     <li class="{{ navActive(['admin.reports']) }}">
                         <a class="d-flex align-items-center" href="{{ route('admin.reports') }}">
                             <i data-feather='clipboard'></i>

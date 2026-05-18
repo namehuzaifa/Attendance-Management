@@ -68,6 +68,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/designation-delete', 'destroy')->name('designation-delete')->middleware(['auth', 'Allow:admin']);
     });
 
+    Route::controller(\App\Http\Controllers\IpAddressController::class)->group(function (){
+        Route::get('/ip-address-list', 'index')->name('ip-list')->middleware(['auth', 'Allow:admin']);
+        Route::post('/ip-address-create', 'store')->name('ip-store')->middleware(['auth', 'Allow:admin']);
+        Route::post('/ip-address-update/{id}', 'update')->name('ip-update')->middleware(['auth', 'Allow:admin']);
+        Route::get('/ip-address-delete', 'destroy')->name('ip-delete')->middleware(['auth', 'Allow:admin']);
+        Route::post('/ip-restriction-toggle', 'toggleSetting')->name('ip-toggle')->middleware(['auth', 'Allow:admin']);
+    });
+
     Route::middleware('auth')->group(function () {
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');;
         Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.checkin');

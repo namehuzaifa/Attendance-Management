@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\CarbonPeriod;
+use App\Models\Setting;
+use App\Models\IpAddress;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
@@ -94,6 +96,20 @@ class AttendanceController extends Controller
         $user = Auth::user();
         $today = now()->toDateString();
 
+        if ($user->user_role === 'user') {
+            $restrictionSetting = Setting::where('key', 'ip_restriction_status')->first();
+            if ($restrictionSetting && $restrictionSetting->value === 'on') {
+                $userIp = $request->ip();
+                $ipExists = IpAddress::where('ip_address', $userIp)->exists();
+                if (!$ipExists) {
+                    return redirect()->back()->with([
+                        'message' => 'You are not connected in office network',
+                        'status' => 'failed'
+                    ]);
+                }
+            }
+        }
+
         // Check if already checked in
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
@@ -128,6 +144,20 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
         $today = now()->toDateString();
+
+        if ($user->user_role === 'user') {
+            $restrictionSetting = Setting::where('key', 'ip_restriction_status')->first();
+            if ($restrictionSetting && $restrictionSetting->value === 'on') {
+                $userIp = $request->ip();
+                $ipExists = IpAddress::where('ip_address', $userIp)->exists();
+                if (!$ipExists) {
+                    return redirect()->back()->with([
+                        'message' => 'You are not connected in office network',
+                        'status' => 'failed'
+                    ]);
+                }
+            }
+        }
 
         $attendance = Attendance::where('user_id', $user->id)
             ->where('date', $today)
