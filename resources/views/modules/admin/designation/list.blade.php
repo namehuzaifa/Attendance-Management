@@ -276,7 +276,7 @@
                 //     source: '',
                 // });
                 jQuery.ajax({
-                    type: 'get',
+                    type: 'post',
                     url: "{{ route('designation-delete') }}",
                     data: {
                         id: id,

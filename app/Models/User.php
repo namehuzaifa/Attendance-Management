@@ -19,8 +19,12 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'full_name',
+        'employee_code',
         'email',
         'phone',
+        'joining_date',
+        'avatar',
+        'annual_leave_quota',
         'password',
         'user_role',
         'office_start_time',
@@ -51,7 +55,11 @@ class User extends Authenticatable
         'password' => 'hashed',
         'office_start_time' => 'datetime:H:i',
         'office_end_time' => 'datetime:H:i',
+        'joining_date' => 'date',
+        'is_active' => 'boolean',
     ];
+
+    protected $appends = ['avatar_url'];
 
     public function relation()
     {
@@ -73,9 +81,38 @@ class User extends Authenticatable
         return $this->hasMany(LeaveRequest::class);
     }
 
+    public function offDays()
+    {
+        return $this->hasMany(OffDay::class);
+    }
+
     public function isAdmin()
     {
         return $this->user_role === 'admin';
     }
 
+    public function shift()
+    {
+        return optional($this->relation)->shiftTiming;
+    }
+
+    /**
+     * Weekly rest days for this user, falling back to the weekend when the
+     * shift has none configured.
+     */
+    public function weeklyOffDays(): array
+    {
+        $shift = $this->shift();
+
+        return ($shift && is_array($shift->off_days) && $shift->off_days)
+            ? $shift->off_days
+            : ['Saturday', 'Sunday'];
+    }
+
+    public function getAvatarUrlAttribute(): string
+    {
+        return $this->avatar
+            ? asset('storage/' . $this->avatar)
+            : asset('assets/images/avatar.png');
+    }
 }

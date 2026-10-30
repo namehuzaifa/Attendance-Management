@@ -4,8 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
+/**
+ * This file used to exercise Breeze's /profile routes, which pointed at a
+ * ProfileController that was never written in this project. The portal edits
+ * a profile through user-edit / user-update, so that is what is covered now.
+ */
 class ProfileTest extends TestCase
 {
     use RefreshDatabase;
@@ -14,86 +20,106 @@ class ProfileTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->get('/profile');
-
-        $response->assertOk();
+        $this->actingAs($user)
+            ->get('/user-edit/' . $user->id)
+            ->assertOk()
+            ->assertSee($user->email);
     }
 
     public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+        $this->actingAs($user)
+            ->post('/user-update/' . $user->id, [
+                'name'  => 'Zara Ahmed',
+                'email' => 'zara@example.com',
+                'phone' => '03009998877',
+            ])
+            ->assertRedirect();
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('Zara Ahmed', $user->full_name);
+        $this->assertSame('zara@example.com', $user->email);
+        $this->assertSame('03009998877', $user->phone);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    public function test_password_can_be_changed_from_the_profile(): void
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => $user->email,
-            ]);
+        $this->actingAs($user)
+            ->post('/user-update/' . $user->id, [
+                'name'                  => $user->full_name,
+                'email'                 => $user->email,
+                'password'              => 'Str0ng-NewPass!',
+                'password_confirmation' => 'Str0ng-NewPass!',
+            ])
+            ->assertRedirect();
 
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
-
-        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->assertTrue(Hash::check('Str0ng-NewPass!', $user->fresh()->password));
     }
 
-    public function test_user_can_delete_their_account(): void
+    public function test_an_unconfirmed_password_is_rejected(): void
     {
         $user = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->delete('/profile', [
-                'password' => 'password',
-            ]);
+        $this->actingAs($user)
+            ->post('/user-update/' . $user->id, [
+                'name'                  => $user->full_name,
+                'email'                 => $user->email,
+                'password'              => 'Str0ng-NewPass!',
+                'password_confirmation' => 'something-else',
+            ])
+            ->assertSessionHasErrors('password');
 
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/');
-
-        $this->assertGuest();
-        $this->assertNull($user->fresh());
+        $this->assertFalse(Hash::check('Str0ng-NewPass!', $user->fresh()->password));
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account(): void
+    public function test_email_must_stay_unique(): void
     {
-        $user = User::factory()->create();
+        $taken = User::factory()->create();
+        $user  = User::factory()->create();
 
-        $response = $this
-            ->actingAs($user)
-            ->from('/profile')
-            ->delete('/profile', [
-                'password' => 'wrong-password',
-            ]);
+        $this->actingAs($user)
+            ->post('/user-update/' . $user->id, [
+                'name'  => $user->full_name,
+                'email' => $taken->email,
+            ])
+            ->assertSessionHasErrors('email');
+    }
 
-        $response
-            ->assertSessionHasErrorsIn('userDeletion', 'password')
-            ->assertRedirect('/profile');
+    public function test_an_admin_cannot_delete_their_own_account(): void
+    {
+        $admin = User::factory()->admin()->create();
+        User::factory()->admin()->create();
 
-        $this->assertNotNull($user->fresh());
+        $this->actingAs($admin)
+            ->delete('/user-delete/' . $admin->id)
+            ->assertSessionHas('status', 'failed');
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    public function test_the_last_administrator_cannot_be_removed(): void
+    {
+        $admin  = User::factory()->admin()->create();
+        $second = User::factory()->admin()->create();
+
+        // Removing one of two is fine.
+        $this->actingAs($admin)->delete('/user-delete/' . $second->id);
+        $this->assertDatabaseMissing('users', ['id' => $second->id]);
+
+        // The remaining one cannot be demoted away either.
+        $this->actingAs($admin)
+            ->post('/user-update/' . $admin->id, [
+                'name'      => $admin->full_name,
+                'email'     => $admin->email,
+                'user_role' => 'user',
+            ])
+            ->assertSessionHas('status', 'failed');
+
+        $this->assertSame('admin', $admin->fresh()->user_role);
     }
 }

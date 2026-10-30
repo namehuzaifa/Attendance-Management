@@ -202,24 +202,42 @@
                             </ul>
                     </li>
 
+                    <li class="{{ navActive(['admin.leave']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('admin.leave') }}">
+                            <i data-feather='coffee'></i>
+                            <span class="menu-title text-truncate">Leave Requests</span>
+                            @php $pendingLeaveCount = \App\Models\LeaveRequest::where('status', 'pending')->count(); @endphp
+                            @if ($pendingLeaveCount > 0)
+                                <span class="badge rounded-pill badge-light-warning ms-auto me-1">{{ $pendingLeaveCount }}</span>
+                            @endif
+                        </a>
+                    </li>
+
                     <li class="{{ navActive(['shift-list']) }}">
                         <a class="d-flex align-items-center" href="{{ route('shift-list') }}">
-                            <i data-feather='users'></i>
-                            <span class="menu-title text-truncate" data-i18n="Invoice">Sift Time</span>
+                            <i data-feather='clock'></i>
+                            <span class="menu-title text-truncate">Shift Timings</span>
                         </a>
                     </li>
 
                     <li class="{{ navActive(['department-list']) }}">
                         <a class="d-flex align-items-center" href="{{ route('department-list') }}">
-                            <i data-feather='users'></i>
-                            <span class="menu-title text-truncate" data-i18n="Invoice">Department</span>
+                            <i data-feather='grid'></i>
+                            <span class="menu-title text-truncate">Departments</span>
                         </a>
                     </li>
 
                     <li class="{{ navActive(['designation-list']) }}">
                         <a class="d-flex align-items-center" href="{{ route('designation-list') }}">
-                            <i data-feather='users'></i>
-                            <span class="menu-title text-truncate" data-i18n="Invoice">Designation</span>
+                            <i data-feather='award'></i>
+                            <span class="menu-title text-truncate">Designations</span>
+                        </a>
+                    </li>
+
+                    <li class="{{ navActive(['holiday-list']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('holiday-list') }}">
+                            <i data-feather='gift'></i>
+                            <span class="menu-title text-truncate">Holidays</span>
                         </a>
                     </li>
 
@@ -271,8 +289,15 @@
 
                     <li class="nav-item {{ navActive(['attendance.index']) }}">
                         <a class="d-flex align-items-center" href="{{ route('attendance.index') }}">
-                            <i data-feather='user'></i>
-                            <span class="menu-title text-truncate" data-i18n="Dashboards">In Out Time</span>
+                            <i data-feather='clock'></i>
+                            <span class="menu-title text-truncate">My Attendance</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item {{ navActive(['leave.index']) }}">
+                        <a class="d-flex align-items-center" href="{{ route('leave.index') }}">
+                            <i data-feather='coffee'></i>
+                            <span class="menu-title text-truncate">My Leave</span>
                         </a>
                     </li>
 

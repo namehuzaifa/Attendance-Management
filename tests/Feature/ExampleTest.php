@@ -2,18 +2,21 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * The portal has no public landing page — the root sends visitors to the
+     * sign-in screen.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_root_url_sends_guests_to_login(): void
     {
-        $response = $this->get('/');
+        $this->get('/')->assertRedirect(route('login'));
+    }
 
-        $response->assertStatus(200);
+    public function test_the_login_screen_renders(): void
+    {
+        $this->get('/login')->assertOk();
     }
 }

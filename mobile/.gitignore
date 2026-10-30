@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.local
+
+# Capacitor copies the built web assets in; they are generated, not source.
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+
+# Gradle / Android build output
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.idea/
+*.apk
+*.aab
+*.keystore
+!debug.keystore

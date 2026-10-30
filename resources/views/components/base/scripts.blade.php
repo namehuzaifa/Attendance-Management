@@ -29,6 +29,12 @@
 <script>
     let token = '{{ csrf_token() }}';
 
+    // Destructive actions moved from GET links to POST, so every ajax call
+    // needs to carry the CSRF header.
+    $.ajaxSetup({
+        headers: { 'X-CSRF-TOKEN': token }
+    });
+
     toastr.options = {
         "closeButton": true,
         "newestOnTop": false,

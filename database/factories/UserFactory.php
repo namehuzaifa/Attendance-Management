@@ -11,34 +11,42 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * The users table has never had a `name` column — the factory wrote to
+     * one anyway, so every factory-made user blew up on insert.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'full_name'         => fake()->name(),
+            'employee_code'     => strtoupper(fake()->unique()->bothify('EMP-####')),
+            'email'             => fake()->unique()->safeEmail(),
+            'phone'             => fake()->numerify('03#########'),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'password'          => static::$password ??= Hash::make('password'),
+            'user_role'         => 'user',
+            'is_active'         => true,
+            'joining_date'      => fake()->dateTimeBetween('-3 years')->format('Y-m-d'),
+            'remember_token'    => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => ['user_role' => 'admin']);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => ['is_active' => false]);
+    }
+
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->state(fn (array $attributes) => ['email_verified_at' => null]);
     }
 }

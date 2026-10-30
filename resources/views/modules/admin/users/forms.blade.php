@@ -57,6 +57,40 @@
                                             @if (auth()->user()->user_role == "admin")
                                                 <div class="col-md-6  col-12">
                                                     <div class="mb-1">
+                                                        <label class="form-label" for="employee_code">Employee Code</label>
+                                                        <input type="text" id="employee_code" class="form-control" name="employee_code"
+                                                               value="{{ $isEdit ? $user?->employee_code : old('employee_code') }}" placeholder="e.g. EMP-0042">
+                                                        @error('employee_code')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6  col-12">
+                                                    <div class="mb-1">
+                                                        <label class="form-label" for="joining_date">Joining Date</label>
+                                                        <input type="date" id="joining_date" class="form-control" name="joining_date"
+                                                               value="{{ $isEdit ? optional($user?->joining_date)->format('Y-m-d') : old('joining_date') }}">
+                                                        @error('joining_date')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                                    </div>
+                                                </div>
+
+                                                @if ($isEdit)
+                                                    <div class="col-md-6  col-12">
+                                                        <div class="mb-1">
+                                                            <label class="form-label d-block">Account Status</label>
+                                                            <div class="form-check form-switch mt-50">
+                                                                <input class="form-check-input" type="checkbox" role="switch"
+                                                                       id="is_active" name="is_active" value="1"
+                                                                       {{ $user?->is_active ? 'checked' : '' }}>
+                                                                <label class="form-check-label" for="is_active">
+                                                                    Active — an inactive account cannot sign in
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <div class="col-md-6  col-12">
+                                                    <div class="mb-1">
                                                         <label class="form-label" for="user_role">User Role</label>
                                                         <select name="user_role" class="form-control" id="user_role">
                                                             <option {{ ($isEdit && $user?->user_role == 'user') ? "selected" : "" }} value="user">User</option>
@@ -119,14 +153,24 @@
 
                                             <div class="col-md-6  col-12">
                                                 <div class="mb-1">
-                                                    <label class="form-label" for="email-id-vertical">Password</label>
+                                                    <label class="form-label" for="password">Password</label>
                                                     <div class="input-group input-group-merge form-password-toggle">
-                                                        <input type="password" class="form-control form-control-merge" id="password" name="password" tabindex="2" placeholder="Password" aria-describedby="login-password">
+                                                        <input type="password" class="form-control form-control-merge" id="password" name="password" tabindex="2" placeholder="{{ $isEdit ? 'Leave blank to keep current' : 'Password' }}">
                                                         <span class="input-group-text cursor-pointer">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                                         </span>
                                                     </div>
                                                     @error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                                </div>
+                                            </div>
+
+                                            {{-- The password rule is `confirmed`, so this field has to exist
+                                                 or no account could ever be saved. --}}
+                                            <div class="col-md-6  col-12">
+                                                <div class="mb-1">
+                                                    <label class="form-label" for="password_confirmation">Confirm Password</label>
+                                                    <input type="password" class="form-control" id="password_confirmation"
+                                                           name="password_confirmation" placeholder="Repeat the password">
                                                 </div>
                                             </div>
 

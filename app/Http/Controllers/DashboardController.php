@@ -3,160 +3,183 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use Illuminate\Http\Request;
+use App\Models\Department;
+use App\Models\LeaveRequest;
+use App\Models\OffDay;
+use App\Models\User;
+use App\Services\AttendanceService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    function index() {
+    public function __construct(private AttendanceService $attendance)
+    {
+    }
 
-        if (Auth::user()->user_role == 'user') {
+    public function index()
+    {
+        return Auth::user()->isAdmin()
+            ? $this->adminDashboard()
+            : $this->employeeDashboard();
+    }
 
-            $user = Auth::user();
-            $userRelation = $user?->relation;
-            $shift = $userRelation?->shiftTiming;
-            $shiftStart = Carbon::parse($shift?->start_time);
-            $shiftEnd   = Carbon::parse($shift?->end_time);
-            $now = Carbon::now();
-            $today = Carbon::today();
+    private function employeeDashboard()
+    {
+        $user  = Auth::user();
+        $today = $this->attendance->businessDate($user);
 
-            if ($shiftEnd->lessThan($shiftStart) ) {
-                $shiftEnd->addDay();
-                $check = Attendance::where('user_id', $user->id)->whereDate('date', $today)->first();
-                if (!$check?->check_in && !$check?->check_out) {
-                    $today = $today->subDay();
-                }
-            }
+        $todayRecord = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->first();
 
-            $checkInAvailable = $now->between($shiftStart->subHours(2), $shiftEnd);
-            $checkOutAvailable =  $now->lessThanOrEqualTo($shiftEnd->addHours(4));
-            $attendanceToday = Attendance::where('user_id', $user->id)->whereDate('date', $checkInAvailable ?  Carbon::today() : $today)->first();
+        $window = $this->attendance->shiftWindow($user, $today);
+        $report = $this->attendance->monthlyReport($user, now()->format('Y-m'));
 
-            // ========= Shift Information: Next 7 days =========
-            $offDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
-            $nextWeek = [];
-            for ($i = 0; $i < 7; $i++) {
-                $date = Carbon::today()->addDays($i);
-                $dayName = $date->format('l');
-                $isOff = in_array($dayName, $offDays);
-                $nextWeek[] = [
-                    'date' => $date->format('D, d M'),
-                    'day' => $dayName,
-                    'start_time' => $isOff ? null : ($shift ? Carbon::parse($shift->start_time)->format('h:i A') : null),
-                    'end_time' => $isOff ? null : ($shift ? Carbon::parse($shift->end_time)->format('h:i A') : null),
-                    'is_off' => $isOff,
-                ];
-            }
+        // Last 7 entries, newest first, for the timeline card.
+        $recent = array_slice(array_reverse($report['days']), 0, 7);
 
-            // ========= In Out Timing: Last 7 days including today =========
-            $last7Start = Carbon::now()->subDays(6)->startOfDay();
-            $last7End = Carbon::now()->endOfDay();
-            $weekAttendances = Attendance::where('user_id', $user->id)
-                ->whereBetween('date', [$last7Start->format('Y-m-d'), $last7End->format('Y-m-d')])
-                ->get()
-                ->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
+        $upcomingHolidays = OffDay::whereDate('date', '>=', now())
+            ->orderBy('date')
+            ->limit(4)
+            ->get();
 
-            $weekReport = [];
-            foreach (CarbonPeriod::create($last7Start, $last7End) as $date) {
-                if ($date->gt(now())) break;
-                $dayName = $date->format('l');
-                $dateKey = $date->format('Y-m-d');
-                $isOff = in_array($dayName, $offDays);
-                $isToday = $date->isToday();
+        $leaveBalance = $this->leaveBalance($user);
 
-                if ($isOff) {
-                    $weekReport[] = [
-                        'date' => $date->format('D, d M'),
-                        'status' => 'Off Day',
-                        'check_in' => null,
-                        'check_out' => null,
-                        'worked_hours' => null,
-                        'is_today' => $isToday,
-                    ];
-                } elseif (isset($weekAttendances[$dateKey])) {
-                    $rec = $weekAttendances[$dateKey];
-                    $workedMins = null;
-                    if ($rec->check_in && $rec->check_out) {
-                        $workedMins = Carbon::parse($rec->check_in)->diffInMinutes(Carbon::parse($rec->check_out));
-                    }
-                    $weekReport[] = [
-                        'date' => $date->format('D, d M'),
-                        'status' => $rec->status ?? 'on time',
-                        'check_in' => $rec->check_in ? Carbon::parse($rec->check_in)->format('h:i A') : '-',
-                        'check_out' => $rec->check_out ? Carbon::parse($rec->check_out)->format('h:i A') : '-',
-                        'worked_hours' => $workedMins !== null ? floor($workedMins / 60) . 'h ' . ($workedMins % 60) . 'm' : '-',
-                        'is_today' => $isToday,
-                    ];
-                } else {
-                    $weekReport[] = [
-                        'date' => $date->format('D, d M'),
-                        'status' => 'Absent',
-                        'check_in' => '-',
-                        'check_out' => '-',
-                        'worked_hours' => '-',
-                        'is_today' => $isToday,
-                    ];
-                }
-            }
-            $weekReport = array_reverse($weekReport);
+        $weeklyOff = $user->weeklyOffDays();
+        $schedule  = [];
 
-            // ========= Employee Stats: Current month =========
-            $monthStart = Carbon::now()->startOfMonth();
-            $monthEnd = Carbon::now()->endOfMonth();
-            $monthAttendances = Attendance::where('user_id', $user->id)
-                ->whereBetween('date', [$monthStart->format('Y-m-d'), $monthEnd->format('Y-m-d')])
-                ->get()
-                ->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
+        foreach (CarbonPeriod::create(now(), now()->copy()->addDays(6)) as $date) {
+            $isOff = in_array($date->format('l'), $weeklyOff);
+            $holiday = OffDay::whereDate('date', $date)->first();
 
-            $totalWorkingDays = $totalWorkingDaysFull = $presentDays = $absentDays = $lateDays = $earlyOutDays = $shortHourDays = $offDaysCount = 0;
-
-            // Calculate total working days for the FULL month
-            foreach (CarbonPeriod::create($monthStart, $monthEnd) as $d) {
-                if (!in_array($d->format('l'), $offDays)) $totalWorkingDaysFull++;
-            }
-
-            foreach (CarbonPeriod::create($monthStart, min($monthEnd, now())) as $date) {
-                $dayName = $date->format('l');
-                $dateKey = $date->format('Y-m-d');
-                $isOff = in_array($dayName, $offDays);
-
-                if ($isOff) {
-                    $offDaysCount++;
-                    continue;
-                }
-
-                $totalWorkingDays++;
-
-                if (isset($monthAttendances[$dateKey])) {
-                    $rec = $monthAttendances[$dateKey];
-                    $presentDays++;
-                    if (str_contains($rec->status ?? '', 'late')) $lateDays++;
-                    if (str_contains($rec->status ?? '', 'early out')) $earlyOutDays++;
-                    if (str_contains($rec->status ?? '', 'short hour')) $shortHourDays++;
-                } else {
-                    $absentDays++;
-                }
-            }
-
-            $employeeStats = [
-                'total_working_days' => $totalWorkingDaysFull,
-                'present' => $presentDays,
-                'off_days' => $offDaysCount,
-                'absent' => $absentDays,
-                'late' => $lateDays,
-                'early_out' => $earlyOutDays,
-                'short_hour' => $shortHourDays,
+            $schedule[] = [
+                'date'    => $date->format('D, d M'),
+                'day'     => $date->format('l'),
+                'is_off'  => $isOff || $holiday !== null,
+                'label'   => $holiday->title ?? ($isOff ? 'Weekly Off' : null),
+                'start'   => (!$isOff && !$holiday && $window) ? $window['start']->format('h:i A') : null,
+                'end'     => (!$isOff && !$holiday && $window) ? $window['end']->format('h:i A') : null,
+                'is_today' => $date->isToday(),
             ];
-
-            return view('modules.admin.dashboard.index', compact(
-                'checkInAvailable', 'checkOutAvailable', 'attendanceToday',
-                'nextWeek', 'weekReport', 'employeeStats'
-            ));
-
-        } else if (Auth::user()->user_role == 'admin') {
-            return view('modules.admin.dashboard.index');
         }
+
+        return view('modules.admin.dashboard.index', [
+            'todayRecord'      => $todayRecord,
+            'window'           => $window,
+            'canCheckIn'       => !$todayRecord || !$todayRecord->check_in,
+            'canCheckOut'      => $todayRecord && $todayRecord->check_in && !$todayRecord->check_out,
+            'summary'          => $report['summary'],
+            'recent'           => $recent,
+            'schedule'         => $schedule,
+            'upcomingHolidays' => $upcomingHolidays,
+            'leaveBalance'     => $leaveBalance,
+            'pendingLeaves'    => $user->leaveRequests()->pending()->count(),
+            'service'          => $this->attendance,
+        ]);
+    }
+
+    private function adminDashboard()
+    {
+        $today = now()->toDateString();
+
+        $employees = User::where('user_role', 'user')->where('is_active', true)->count();
+
+        $todayRecords = Attendance::with('user')
+            ->whereDate('date', $today)
+            ->get();
+
+        $present = $todayRecords->whereNotNull('check_in')->count();
+        $late    = $todayRecords->where('is_late', true)->count();
+        $out     = $todayRecords->whereNotNull('check_out')->count();
+
+        $onLeaveToday = LeaveRequest::approved()
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->with('user')
+            ->get();
+
+        $isHoliday = OffDay::whereDate('date', $today)->first();
+
+        // Everyone who is expected in today but has not punched yet.
+        $checkedInIds = $todayRecords->whereNotNull('check_in')->pluck('user_id')->all();
+        $onLeaveIds   = $onLeaveToday->pluck('user_id')->all();
+
+        $missing = User::where('user_role', 'user')
+            ->where('is_active', true)
+            ->whereNotIn('id', array_merge($checkedInIds, $onLeaveIds))
+            ->with('relation.department')
+            ->get()
+            ->reject(fn (User $u) => in_array(now()->format('l'), $u->weeklyOffDays()) || $isHoliday)
+            ->values();
+
+        // 14-day trend for the chart.
+        $trendStart = now()->copy()->subDays(13)->startOfDay();
+
+        $trendRows = Attendance::whereBetween('date', [$trendStart, now()])
+            ->selectRaw('date, COUNT(*) as total, SUM(is_late) as late')
+            ->groupBy('date')
+            ->get()
+            ->keyBy(fn ($r) => Carbon::parse($r->date)->format('Y-m-d'));
+
+        $trend = [];
+        foreach (CarbonPeriod::create($trendStart, now()) as $date) {
+            $key = $date->format('Y-m-d');
+            $trend[] = [
+                'label'   => $date->format('d M'),
+                'present' => (int) ($trendRows[$key]->total ?? 0),
+                'late'    => (int) ($trendRows[$key]->late ?? 0),
+            ];
+        }
+
+        $departments = Department::with('userRelations:id,user_id,department_id')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Department $department) use ($todayRecords) {
+                $ids = $department->userRelations->pluck('user_id');
+
+                return [
+                    'name'    => $department->name,
+                    'staff'   => $ids->count(),
+                    'present' => $todayRecords->whereIn('user_id', $ids)->whereNotNull('check_in')->count(),
+                ];
+            });
+
+        return view('modules.admin.dashboard.index', [
+            'stats' => [
+                'employees'    => $employees,
+                'present'      => $present,
+                'late'         => $late,
+                'checked_out'  => $out,
+                'on_leave'     => $onLeaveToday->count(),
+                'missing'      => $missing->count(),
+                'rate'         => $employees > 0 ? (int) round(($present / $employees) * 100) : 0,
+            ],
+            'isHoliday'     => $isHoliday,
+            'recentPunches' => $todayRecords->whereNotNull('check_in')->sortByDesc('check_in')->take(8)->values(),
+            'missing'       => $missing->take(8),
+            'onLeaveToday'  => $onLeaveToday->take(6),
+            'pendingLeaves' => LeaveRequest::pending()->with('user')->latest()->take(6)->get(),
+            'pendingCount'  => LeaveRequest::pending()->count(),
+            'trend'         => $trend,
+            'departments'   => $departments,
+            'service'       => $this->attendance,
+        ]);
+    }
+
+    /**
+     * @return array{quota: int, used: int, remaining: int}
+     */
+    private function leaveBalance(User $user): array
+    {
+        $quota = (int) ($user->annual_leave_quota ?? 20);
+
+        $used = (int) $user->leaveRequests()
+            ->approved()
+            ->whereBetween('start_date', [now()->startOfYear(), now()->endOfYear()])
+            ->sum('days');
+
+        return ['quota' => $quota, 'used' => $used, 'remaining' => max(0, $quota - $used)];
     }
 }

@@ -275,7 +275,7 @@
                 //     source: '',
                 // });
                 jQuery.ajax({
-                    type: 'get',
+                    type: 'post',
                     url: "{{ route('department-delete') }}",
                     data: {
                         id: id,

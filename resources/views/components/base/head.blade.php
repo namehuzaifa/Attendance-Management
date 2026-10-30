@@ -33,6 +33,7 @@
 
     <!-- BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="{{ asset('/') }}assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('/') }}assets/css/hrms.css?v=1">
     <!-- END: Custom CSS-->
 
     <title>@yield('title','Home')</title>

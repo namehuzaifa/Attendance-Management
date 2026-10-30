@@ -10,4 +10,9 @@ class Department extends Model
     use HasFactory;
 
     protected $fillable = ['name'];
+
+    public function userRelations()
+    {
+        return $this->hasMany(UserRelation::class);
+    }
 }

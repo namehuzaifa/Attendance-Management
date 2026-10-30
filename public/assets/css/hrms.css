@@ -1,0 +1,377 @@
+/* ---------------------------------------------------------------------------
+   HRMS — components layered on top of the Vuexy theme.
+   Everything here is scoped to hrms-* classes so theme updates stay safe.
+   --------------------------------------------------------------------------- */
+
+:root {
+    --hrms-primary: #7367f0;
+    --hrms-primary-dark: #5e50ee;
+    --hrms-success: #28c76f;
+    --hrms-warning: #ff9f43;
+    --hrms-danger: #ea5455;
+    --hrms-info: #00cfe8;
+    --hrms-muted: #b9b9c3;
+    --hrms-surface: #fff;
+    --hrms-border: rgba(34, 41, 47, 0.08);
+    --hrms-text: #5e5873;
+    --hrms-heading: #4b4b5a;
+    --hrms-radius: 0.75rem;
+    --hrms-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.08);
+}
+
+html.dark-layout {
+    --hrms-surface: #283046;
+    --hrms-border: rgba(255, 255, 255, 0.08);
+    --hrms-text: #b4b7bd;
+    --hrms-heading: #d0d2d6;
+    --hrms-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* ------------------------------------------------------------ punch hero */
+
+.hrms-hero {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    border-radius: var(--hrms-radius);
+    background: linear-gradient(118deg, var(--hrms-primary) 0%, #9d8bff 60%, #b8a9ff 100%);
+    color: #fff;
+    box-shadow: 0 10px 30px -12px rgba(115, 103, 240, 0.65);
+}
+
+.hrms-hero::after {
+    content: '';
+    position: absolute;
+    right: -70px;
+    top: -90px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.hrms-hero::before {
+    content: '';
+    position: absolute;
+    right: 40px;
+    bottom: -120px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hrms-hero .card-body {
+    position: relative;
+    z-index: 2;
+}
+
+.hrms-hero__greeting {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.15rem;
+}
+
+.hrms-hero__sub {
+    color: rgba(255, 255, 255, 0.78);
+    margin-bottom: 0;
+}
+
+.hrms-clock {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.hrms-clock small {
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.hrms-punch-btn {
+    border: none;
+    border-radius: 2rem;
+    padding: 0.85rem 2.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--hrms-primary);
+    box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hrms-punch-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -6px rgba(0, 0, 0, 0.4);
+    color: var(--hrms-primary-dark);
+}
+
+.hrms-punch-btn--out {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.hrms-punch-btn--out:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.26);
+    color: #fff;
+}
+
+.hrms-punch-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.hrms-punch-meta {
+    display: flex;
+    gap: 1.75rem;
+    flex-wrap: wrap;
+}
+
+.hrms-punch-meta__item .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.hrms-punch-meta__item .value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------- stat tiles */
+
+.hrms-stat {
+    border-radius: var(--hrms-radius);
+    border: 1px solid var(--hrms-border);
+    background: var(--hrms-surface);
+    box-shadow: var(--hrms-shadow);
+    height: 100%;
+}
+
+.hrms-stat__body {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.hrms-stat__icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 0.65rem;
+    display: grid;
+    place-items: center;
+}
+
+.hrms-stat__icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.hrms-stat__value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--hrms-heading);
+    font-variant-numeric: tabular-nums;
+}
+
+.hrms-stat__label {
+    font-size: 0.82rem;
+    color: var(--hrms-text);
+    margin-bottom: 0;
+}
+
+.hrms-tint-primary { background: rgba(115, 103, 240, 0.12); color: var(--hrms-primary); }
+.hrms-tint-success { background: rgba(40, 199, 111, 0.12); color: var(--hrms-success); }
+.hrms-tint-warning { background: rgba(255, 159, 67, 0.12); color: var(--hrms-warning); }
+.hrms-tint-danger  { background: rgba(234, 84, 85, 0.12);  color: var(--hrms-danger); }
+.hrms-tint-info    { background: rgba(0, 207, 232, 0.12);  color: var(--hrms-info); }
+.hrms-tint-secondary { background: rgba(185, 185, 195, 0.18); color: #a8aaae; }
+
+/* ------------------------------------------------------------- ring gauge */
+
+.hrms-ring {
+    --value: 0;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin: 0 auto;
+    background: conic-gradient(var(--hrms-primary) calc(var(--value) * 1%), rgba(115, 103, 240, 0.14) 0);
+}
+
+.hrms-ring__inner {
+    width: 102px;
+    height: 102px;
+    border-radius: 50%;
+    background: var(--hrms-surface);
+    display: grid;
+    place-items: center;
+    text-align: center;
+}
+
+.hrms-ring__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--hrms-heading);
+    line-height: 1;
+}
+
+.hrms-ring__label {
+    font-size: 0.7rem;
+    color: var(--hrms-text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* --------------------------------------------------------------- timeline */
+
+.hrms-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.hrms-timeline__row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--hrms-border);
+}
+
+.hrms-timeline__row:last-child { border-bottom: none; }
+
+.hrms-timeline__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: 0 0 10px;
+}
+
+.hrms-timeline__date {
+    font-weight: 600;
+    color: var(--hrms-heading);
+    font-size: 0.88rem;
+    min-width: 96px;
+}
+
+.hrms-timeline__times {
+    margin-left: auto;
+    text-align: right;
+    font-size: 0.82rem;
+    color: var(--hrms-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ misc pieces */
+
+.hrms-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.hrms-card {
+    border-radius: var(--hrms-radius);
+    border: 1px solid var(--hrms-border);
+    box-shadow: var(--hrms-shadow);
+}
+
+.hrms-avatar-initials {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    flex: 0 0 34px;
+}
+
+.hrms-schedule {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.hrms-schedule__day {
+    border: 1px solid var(--hrms-border);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.35rem;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--hrms-text);
+}
+
+.hrms-schedule__day.is-today {
+    border-color: var(--hrms-primary);
+    background: rgba(115, 103, 240, 0.08);
+}
+
+.hrms-schedule__day.is-off {
+    background: rgba(185, 185, 195, 0.12);
+    color: var(--hrms-muted);
+}
+
+.hrms-schedule__dow {
+    font-weight: 700;
+    color: var(--hrms-heading);
+    font-size: 0.78rem;
+}
+
+.hrms-empty {
+    text-align: center;
+    padding: 2.25rem 1rem;
+    color: var(--hrms-muted);
+}
+
+.hrms-empty svg {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 0.65rem;
+    opacity: 0.6;
+}
+
+.hrms-progress {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(185, 185, 195, 0.25);
+    overflow: hidden;
+}
+
+.hrms-progress__bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--hrms-primary);
+}
+
+.hrms-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hrms-table td { vertical-align: middle; }
+
+@media (max-width: 575.98px) {
+    .hrms-clock { font-size: 2.1rem; }
+    .hrms-schedule { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hrms-punch-meta { gap: 1.1rem; }
+}

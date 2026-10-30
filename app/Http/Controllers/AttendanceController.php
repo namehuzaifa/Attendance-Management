@@ -3,300 +3,145 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Department;
 use App\Models\User;
+use App\Services\AttendanceService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\CarbonPeriod;
-use App\Models\Setting;
-use App\Models\IpAddress;
-use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private AttendanceService $attendance)
     {
-        $user = Auth::user();
-        $month = $request->get('month', now()->format('Y-m'));
-
-        $shift = optional($user->relation)->shiftTiming;
-        $offDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
-
-        $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
-        $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
-
-        $attendances = $user->attendances()
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
-            ->get()
-            ->keyBy(fn($item) => Carbon::parse($item->date)->format('Y-m-d'));
-
-        $period = CarbonPeriod::create($startOfMonth, $endOfMonth);
-        $report = [];
-
-        $i = 1;
-        foreach ($period as $date) {
-            $dayName = $date->format('l');
-            $dateKey = $date->format('Y-m-d');
-
-            if (isset($attendances[$dateKey])) {
-                // User ne us din attendance di
-                $report[] = [
-                    'id' => $i,
-                    'date' => $date->format('D d-M-Y'),
-                    'status' => $attendances[$dateKey]?->status,
-                    'check_in' => $attendances[$dateKey]?->check_in ? Carbon::parse($attendances[$dateKey]?->check_in)?->format('D h:i:s a') : null,
-                    'check_out' => $attendances[$dateKey]?->check_out ? Carbon::parse($attendances[$dateKey]?->check_out)?->format('D h:i:s a') : null,
-                ];
-            } else {
-                // Attendance nahi di
-                if (in_array($dayName, $offDays)) {
-                    $report[] = [
-                        'id' => $i,
-                        'date' => $date->format('D d-M-Y'),
-                        'status' => 'Off Day',
-                        'check_in' => null,
-                        'check_out' => null,
-                    ];
-                } else {
-                    $report[] = [
-                        'id' => $i,
-                        'date' => $date->format('D d-M-Y'),
-                        'status' => 'Absent',
-                        'check_in' => null,
-                        'check_out' => null,
-                    ];
-                }
-            }
-
-            $i++;
-            if (now()->format('Y-m-d') == $date->format('Y-m-d')) {
-               break;
-            }
-        }
-
-        $attendances = json_decode(json_encode($report));
-        return view('modules.admin.attendance.list', compact('attendances', 'month'));
     }
 
-    public function indexOld(Request $request)
+    /**
+     * The signed-in employee's own month.
+     */
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        $month = $request->get('month', now()->format('Y-m'));
+        $user  = Auth::user();
+        $month = $this->safeMonth($request->get('month'));
 
-        $attendances = $user->attendances()
-            ->whereYear('date', substr($month, 0, 4))
-            ->whereMonth('date', substr($month, 5, 2))
-            ->orderBy('date', 'desc')
-            ->paginate(31);
+        $report = $this->attendance->monthlyReport($user, $month);
 
-        return view('modules.admin.attendance.list', compact('attendances', 'month'));
+        return view('modules.admin.attendance.list', [
+            'days'    => $report['days'],
+            'summary' => $report['summary'],
+            'month'   => $month,
+            'service' => $this->attendance,
+        ]);
     }
 
     public function checkIn(Request $request)
     {
-        $user = Auth::user();
-        $today = now()->toDateString();
-
-        if ($user->user_role === 'user') {
-            $restrictionSetting = Setting::where('key', 'ip_restriction_status')->first();
-            if ($restrictionSetting && $restrictionSetting->value === 'on') {
-                $userIp = $request->ip();
-                $ipExists = IpAddress::where('ip_address', $userIp)->exists();
-                if (!$ipExists) {
-                    return redirect()->back()->with([
-                        'message' => 'You are not connected in office network',
-                        'status' => 'failed'
-                    ]);
-                }
-            }
-        }
-
-        // Check if already checked in
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
-
-        if ($attendance && $attendance->check_in) {
-            return redirect()->back()->with([
-                'message' => 'Already checked in today',
-                'status' => 'failed'
-            ]);
-        }
-
-        $checkInTime = now();
-
-        // Create or update attendance
-        $attendance = Attendance::updateOrCreate(
-            ['user_id' => $user->id, 'date' => $today],
-            [
-                'check_in' => $checkInTime,
-                'status' => $this->determineStatus($user, $checkInTime)
-            ]
-        );
-
-        return redirect()->back()->with([
-            'message' => 'Checked in successfully',
-            'status' => 'success'
+        $result = $this->attendance->checkIn(Auth::user(), [
+            'ip'     => $request->ip(),
+            'lat'    => $request->input('latitude'),
+            'lng'    => $request->input('longitude'),
+            'source' => 'web',
         ]);
 
+        return redirect()->back()->with([
+            'message' => $result['message'],
+            'status'  => $result['ok'] ? 'success' : 'failed',
+        ]);
     }
 
     public function checkOut(Request $request)
     {
-        $user = Auth::user();
-        $today = now()->toDateString();
-
-        if ($user->user_role === 'user') {
-            $restrictionSetting = Setting::where('key', 'ip_restriction_status')->first();
-            if ($restrictionSetting && $restrictionSetting->value === 'on') {
-                $userIp = $request->ip();
-                $ipExists = IpAddress::where('ip_address', $userIp)->exists();
-                if (!$ipExists) {
-                    return redirect()->back()->with([
-                        'message' => 'You are not connected in office network',
-                        'status' => 'failed'
-                    ]);
-                }
-            }
-        }
-
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', $today)
-            ->first();
-
-        if (!$attendance) {
-            $yesterday = now()->subDay()->toDateString();
-            $attendance = Attendance::where('user_id', $user->id)
-                ->where('date', $yesterday)
-                ->first();
-        }
-
-        if (!$attendance || !$attendance->check_in) {
-            // return response()->json(['error' => 'Must check in first'], 400);
-            return redirect()->back()->with([
-                'message' => 'You must check in first before checking out.',
-                'status' => 'failed'
-            ]);
-        }
-
-        if ($attendance->check_out) {
-            // return response()->json(['error' => 'Already checked out'], 400);
-            return redirect()->back()->with([
-                'message' => 'Already checked out',
-                'status' => 'failed'
-            ]);
-        }
-
-            // 🟢 Step 5: Check-out time set karo
-        // $checkOutTime = now();
-        // $attendance->check_out = $checkOutTime->format('H:i:s');
-
-        // // 🟢 Step 6: Status update karo based on early out / short hour
-        // $shift = $user->relation->shiftTiming;
-        // $startTime = Carbon::parse($shift->start_time);
-        // $endTime = Carbon::parse($shift->end_time);
-
-        // // Agar shift end next day me hai (e.g. 01:00 AM), to end time ko +1 day karo
-        // if ($endTime->lessThan($startTime)) {
-        //     $endTime->addDay();
-        // }
-
-        // $checkIn = Carbon::parse($attendance->check_in);
-        // if ($checkIn->greaterThan($endTime)) {
-        //     $checkIn->subDay(); // midnight shift ke liye adjust
-        // }
-
-        // $checkOut = $checkOutTime;
-
-        // $totalShiftMinutes = $startTime->diffInMinutes($endTime);
-        // $workedMinutes = $checkIn->diffInMinutes($checkOut);
-
-        // $newStatus = $attendance->status;
-
-        // // ⏰ Early out
-        // if ($checkOut->lt($endTime)) {
-        //     $newStatus .= ' | early out';
-        // }
-
-        // // 🕒 Short working hours (15 min grace)
-        // if ($workedMinutes < $totalShiftMinutes - 15) {
-        //     $newStatus .= ' | short hour';
-        // }
-
-        // $attendance->status = trim($newStatus, ' |');
-        // $attendance->save();
-
-        // return redirect()->back()->with([
-        //     'message' => 'Checked out successfully',
-        //     'status' => 'success'
-        // ]);
-
-        $checkOutTime = now();
-        $attendance->check_out = $checkOutTime;
-
-            // calculate working hours
-        $shift = $user->relation->shiftTiming;
-        $startTime = Carbon::parse($shift->start_time);
-        $endTime = Carbon::parse($shift->end_time);
-        $checkIn = Carbon::parse($attendance->check_in);
-        $checkOut = Carbon::parse($checkOutTime);
-
-        $totalShiftMinutes = $startTime->diffInMinutes($endTime);
-        $workedMinutes = $checkIn->diffInMinutes($checkOut);
-
-        $newStatus = $attendance->status;
-
-        // Check for early checkout
-        if ($checkOut->lt($endTime)) {
-            $newStatus .= ' | early out';
-        }
-
-        // Check for short working hours
-        if ($workedMinutes < $totalShiftMinutes) { // allow 15 min grace
-            $newStatus .= ' | short hour';
-        }
-
-        $attendance->status = $newStatus;
-        $attendance->save();
+        $result = $this->attendance->checkOut(Auth::user(), [
+            'ip'     => $request->ip(),
+            'lat'    => $request->input('latitude'),
+            'lng'    => $request->input('longitude'),
+            'source' => 'web',
+        ]);
 
         return redirect()->back()->with([
-            'message' => 'Checked out successfully',
-            'status' => 'success',
-            // 'time' => $checkOutTime
+            'message' => $result['message'],
+            'status'  => $result['ok'] ? 'success' : 'failed',
         ]);
     }
 
-    private function determineStatus($user, $checkInTime)
+    /**
+     * Admin correction of a punch. The route for this existed but pointed at
+     * a method that was never written, so every edit returned a 500.
+     */
+    public function updateAttendance(Request $request, $id)
     {
-        $graceTime   = optional(optional($user->relation)->shiftTiming)->grace_period ?? 0;
-        $officeStart = optional(optional($user->relation)->shiftTiming)->start_time;
+        $validated = $request->validate([
+            'check_in'  => ['nullable', 'date_format:H:i'],
+            'check_out' => ['nullable', 'date_format:H:i'],
+            'notes'     => ['nullable', 'string', 'max:500'],
+        ]);
 
-        if (!$officeStart) return 'on time';
+        $record = Attendance::with('user')->findOrFail($id);
+        $date   = Carbon::parse($record->date);
 
-        $lateThreshold = Carbon::parse($officeStart)->addMinutes($graceTime);
-        $checkIn       = Carbon::parse($checkInTime);
+        $checkIn = !empty($validated['check_in'])
+            ? $date->copy()->setTimeFromTimeString($validated['check_in'])
+            : null;
 
-        return $checkIn->gt($lateThreshold) ? 'late' : 'on time';
+        $checkOut = !empty($validated['check_out'])
+            ? $date->copy()->setTimeFromTimeString($validated['check_out'])
+            : null;
+
+        // An overnight shift legitimately ends on the following calendar day.
+        if ($checkIn && $checkOut && $checkOut->lessThanOrEqualTo($checkIn)) {
+            $checkOut->addDay();
+        }
+
+        $window = $record->user ? $this->attendance->shiftWindow($record->user, $date) : null;
+
+        $late = 0;
+        if ($checkIn && $window) {
+            $threshold = $window['start']->copy()->addMinutes($window['grace']);
+            $late      = $checkIn->greaterThan($threshold) ? (int) $threshold->diffInMinutes($checkIn) : 0;
+        }
+
+        $worked = ($checkIn && $checkOut) ? (int) $checkIn->diffInMinutes($checkOut) : null;
+
+        $record->update([
+            'check_in'       => $checkIn,
+            'check_out'      => $checkOut,
+            'notes'          => $validated['notes'] ?? $record->notes,
+            'status'         => $late > 0 ? 'late' : 'on time',
+            'is_late'        => $late > 0,
+            'late_minutes'   => $late > 0 ? $late : null,
+            'worked_minutes' => $worked,
+            'is_early_out'   => ($checkOut && $window) ? $checkOut->lessThan($window['end']) : false,
+            'is_short_hour'  => ($worked !== null && $window) ? $worked < ($window['minutes'] - $window['grace']) : false,
+            'edited_by'      => Auth::id(),
+        ]);
+
+        return redirect()->back()->with([
+            'message' => 'Attendance updated successfully.',
+            'status'  => 'success',
+        ]);
     }
 
-    // Admin Methods
+    // ---------------------------------------------------------------- admin
+
     public function adminReports(Request $request)
     {
-        // $this->authorize('admin');
+        $userId       = $request->get('user_id');
+        $departmentId = $request->get('department_id');
+        $date         = $request->get('date');
+        $month        = $request->get('month');
 
-        $userId = $request->get('user_id');
-        $date   = $request->get('date');
-        $month  = $request->get('month');
-
-        $query = Attendance::with('user');
+        $query = Attendance::with('user.relation.department');
 
         if ($date) {
             $query->whereDate('date', $date);
         } elseif ($month) {
-            $startOfMonth = Carbon::parse($month . '-01')->startOfMonth();
-            $endOfMonth   = Carbon::parse($month . '-01')->endOfMonth();
-            $query->whereBetween('date', [$startOfMonth, $endOfMonth]);
+            $month = $this->safeMonth($month);
+            $query->whereBetween('date', [
+                Carbon::parse($month . '-01')->startOfMonth(),
+                Carbon::parse($month . '-01')->endOfMonth(),
+            ]);
         } else {
-            // Default to today if no date or month filter
             $date = now()->toDateString();
             $query->whereDate('date', $date);
         }
@@ -305,227 +150,119 @@ class AttendanceController extends Controller
             $query->where('user_id', $userId);
         }
 
-        $attendances = $query->orderBy('date', 'desc')->paginate(50)->appends($request->except('page'));
-        $users = User::where('user_role', 'user')->get();
+        if ($departmentId) {
+            $query->whereHas('user.relation', fn ($q) => $q->where('department_id', $departmentId));
+        }
 
-        return view('modules.admin.attendance.admin-list', compact('attendances', 'users', 'date', 'month', 'userId'));
+        $attendances = $query->orderByDesc('date')->orderBy('user_id')
+            ->paginate(50)
+            ->appends($request->except('page'));
+
+        return view('modules.admin.attendance.admin-list', [
+            'attendances'  => $attendances,
+            'users'        => User::where('user_role', 'user')->orderBy('full_name')->get(),
+            'departments'  => Department::orderBy('name')->get(),
+            'date'         => $date,
+            'month'        => $month,
+            'userId'       => $userId,
+            'departmentId' => $departmentId,
+            'service'      => $this->attendance,
+        ]);
     }
 
     public function userMonthlyReport(Request $request)
     {
-        $users           = User::where('user_role', 'user')->orderBy('full_name')->get();
-        $selectedUser    = null;
-        $report          = [];
-        $summary         = null;
-        $availableMonths = [];
-
+        $users          = User::where('user_role', 'user')->orderBy('full_name')->get();
         $selectedUserId = $request->get('user_id');
-        $selectedYear   = $request->get('year', now()->year);
-        $selectedMonth  = $request->get('month');
-        $shift = optional(optional(User::find($selectedUserId))->relation)->shiftTiming;
-        $offDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
+        $selectedMonth  = $this->safeMonth($request->get('month'));
 
-        if ($selectedUserId) {
-            $selectedUser = User::find($selectedUserId);
+        $selectedUser = $selectedUserId ? User::find($selectedUserId) : null;
+        $report       = $selectedUser ? $this->attendance->monthlyReport($selectedUser, $selectedMonth) : null;
 
-            $availableMonths = Attendance::where('user_id', $selectedUserId)
-                ->whereYear('date', $selectedYear)
-                ->selectRaw('MONTH(date) as month_num')
-                ->groupBy('month_num')
-                ->orderBy('month_num')
-                ->get()
-                ->map(fn($r) => [
-                    'num'   => $r->month_num,
-                    'label' => Carbon::createFromDate($selectedYear, $r->month_num, 1)->format('F Y'),
-                    'value' => Carbon::createFromDate($selectedYear, $r->month_num, 1)->format('Y-m'),
-                ]);
-
-            if ($selectedMonth) {
-                $startOfMonth      = Carbon::parse($selectedMonth . '-01')->startOfMonth();
-                $endOfMonth        = Carbon::parse($selectedMonth . '-01')->endOfMonth();
-                $attendanceRecords = Attendance::where('user_id', $selectedUserId)
-                    ->whereBetween('date', [$startOfMonth, $endOfMonth])
-                    ->get()
-                    ->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
-
-                $shift      = optional(optional($selectedUser->relation)->shiftTiming);
-                $shiftStart = $shift?->start_time ? Carbon::parse($shift->start_time) : null;
-                $shiftEnd   = $shift?->end_time   ? Carbon::parse($shift->end_time)   : null;
-                // Daily shift minutes (required per working day)
-                $dailyShiftMins = ($shiftStart && $shiftEnd) ? $shiftStart->diffInMinutes($shiftEnd) : null;
-
-                $totalWorkingDays = $presentDays = $absentDays = $lateDays = $totalShiftMins = $totalWorkedMins = $totalShortMins = 0;
-
-                foreach (CarbonPeriod::create($startOfMonth, $endOfMonth) as $date) {
-                    if ($date->gt(now())) break;
-                    $dayName  = $date->format('l');
-                    $dateKey  = $date->format('Y-m-d');
-                    $isOffDay = in_array($dayName, $offDays);
-
-                    if ($isOffDay) {
-                        $report[] = ['date' => $date->format('D, d M Y'), 'day' => $dayName, 'status' => 'Off Day',
-                            'check_in' => null, 'check_out' => null, 'worked_mins' => null, 'short_mins' => null, 'is_off' => true];
-                        continue;
-                    }
-
-                    $totalWorkingDays++;
-
-                    if (isset($attendanceRecords[$dateKey])) {
-                        $rec        = $attendanceRecords[$dateKey];
-                        $workedMins = null;
-                        $shortMins  = null;
-
-                        if ($rec->check_in && $rec->check_out) {
-                            $workedMins = Carbon::parse($rec->check_in)->diffInMinutes(Carbon::parse($rec->check_out));
-                            if ($dailyShiftMins !== null) {
-                                $shortMins       = max(0, $dailyShiftMins - $workedMins);
-                                $totalShiftMins  += $dailyShiftMins;
-                                $totalWorkedMins += $workedMins;
-                                $totalShortMins  += $shortMins;
-                            }
-                        } elseif ($dailyShiftMins !== null) {
-                            // checked in but no checkout — or absent with check-in: count full day as short
-                        }
-
-                        $presentDays++;
-                        if (str_contains($rec->status ?? '', 'late')) $lateDays++;
-
-                        $report[] = [
-                            'date'            => $date->format('D, d M Y'),
-                            'day'             => $dayName,
-                            'status'          => $rec->status,
-                            'check_in'        => $rec->check_in  ? Carbon::parse($rec->check_in)->format('h:i A')  : null,
-                            'check_out'       => $rec->check_out ? Carbon::parse($rec->check_out)->format('h:i A') : null,
-                            'daily_shift_mins'=> $dailyShiftMins,
-                            'worked_mins'     => $workedMins,
-                            'short_mins'      => $shortMins,
-                            'is_off'          => false,
-                        ];
-                    } else {
-                        $absentDays++;
-                        $report[] = ['date' => $date->format('D, d M Y'), 'day' => $dayName, 'status' => 'Absent',
-                            'check_in' => null, 'check_out' => null, 'worked_mins' => null, 'short_mins' => null, 'is_off' => false];
-                    }
-                }
-
-                $summary = [
-                    'total_working_days'  => $totalWorkingDays,
-                    'present_days'        => $presentDays,
-                    'absent_days'         => $absentDays,
-                    'late_days'           => $lateDays,
-                    'daily_shift_mins'    => $dailyShiftMins,    // per-day required (for display)
-                    'total_shift_mins'    => $totalShiftMins,    // total required minutes
-                    'total_worked_mins'   => $totalWorkedMins,   // total worked minutes
-                    'total_short_mins'    => $totalShortMins,    // total short minutes
-                ];
-            }
-        }
-
-        return view('modules.admin.attendance.user-monthly-report', compact(
-            'users', 'selectedUser', 'selectedUserId', 'selectedYear',
-            'selectedMonth', 'availableMonths', 'report', 'summary'
-        ));
+        return view('modules.admin.attendance.user-monthly-report', [
+            'users'        => $users,
+            'selectedUser' => $selectedUser,
+            'month'        => $selectedMonth,
+            'days'         => $report['days'] ?? [],
+            'summary'      => $report['summary'] ?? null,
+            'service'      => $this->attendance,
+        ]);
     }
 
     public function allUsersMonthlyReport(Request $request)
     {
-        // $this->authorize('admin');
+        $month = $this->safeMonth($request->get('month'));
 
-        $selectedMonth = $request->get('month', now()->format('Y-m'));
-        $selectedYear  = $request->get('year', now()->year);
-        $startOfMonth  = Carbon::parse($selectedMonth . '-01')->startOfMonth();
-        $endOfMonth    = Carbon::parse($selectedMonth . '-01')->endOfMonth();
-
-        // In allUsersMonthlyReport, we'll fetch offDays per user below. 
-        // For total working days (overall), we can assume general off days.
-        $generalOffDays = ['Sunday', 'Saturday'];
-        $period  = CarbonPeriod::create($startOfMonth, min($endOfMonth, now()));
-        $totalWorkingDays = 0;
-        foreach ($period as $d) {
-            if (!in_array($d->format('l'), $generalOffDays)) $totalWorkingDays++;
-        }
-
-        $users = User::where('user_role', 'user')
-            ->orderBy('full_name')
-            ->with(['attendances' => fn($q) => $q->whereBetween('date', [$startOfMonth, $endOfMonth]),
-                    'relation.shiftTiming'])
-            ->get();
-
-        $usersReport = $users->map(function ($user) use ($period, $startOfMonth, $endOfMonth) {
-            $attendances = $user->attendances->keyBy(fn($a) => Carbon::parse($a->date)->format('Y-m-d'));
-
-            $shift      = optional($user->relation)->shiftTiming;
-            $userOffDays = ($shift && is_array($shift->off_days)) ? $shift->off_days : ['Sunday', 'Saturday'];
-            
-            $totalWorkingDays = 0;
-            foreach ($period as $d) {
-                if (!in_array($d->format('l'), $userOffDays)) $totalWorkingDays++;
-            }
-
-            $presentDays = $absentDays = $lateDays = $totalWorkedMins = $totalShiftMins = 0;
-
-            $shift      = optional(optional($user->relation)->shiftTiming);
-            $shiftStart = $shift?->start_time ? Carbon::parse($shift->start_time) : null;
-            $shiftEnd   = $shift?->end_time   ? Carbon::parse($shift->end_time)   : null;
-            $shiftMins  = ($shiftStart && $shiftEnd) ? $shiftStart->diffInMinutes($shiftEnd) : null;
-
-            foreach (CarbonPeriod::create($startOfMonth, min($endOfMonth, now())) as $date) {
-                if (in_array($date->format('l'), $userOffDays)) continue;
-                $dateKey = $date->format('Y-m-d');
-
-                if (isset($attendances[$dateKey])) {
-                    $rec = $attendances[$dateKey];
-                    $presentDays++;
-                    if (str_contains($rec->status ?? '', 'late')) $lateDays++;
-                    if ($rec->check_in && $rec->check_out && $shiftMins) {
-                        $totalWorkedMins += Carbon::parse($rec->check_in)->diffInMinutes(Carbon::parse($rec->check_out));
-                        $totalShiftMins  += $shiftMins;
-                    }
-                } else {
-                    $absentDays++;
-                }
-            }
-
-            return [
-                'id'                 => $user->id,
-                'name'               => $user->full_name,
-                'email'              => $user->email,
-                'department'         => optional(optional($user->relation)->department)->name ?? '-',
-                'total_working_days' => $totalWorkingDays,
-                'present_days'       => $presentDays,
-                'absent_days'        => $absentDays,
-                'late_days'          => $lateDays,
-                'total_shift_hours'  => $totalShiftMins  > 0 ? round($totalShiftMins  / 60, 2) : null,
-                'total_worked_hours' => $totalWorkedMins > 0 ? round($totalWorkedMins / 60, 2) : null,
-                'attendance_pct'     => $totalWorkingDays > 0 ? round(($presentDays / $totalWorkingDays) * 100) : 0,
-            ];
-        });
-
-        $years = range(now()->year, max(now()->year - 3, 2023));
-
-        return view('modules.admin.attendance.all-users-report', compact(
-            'usersReport', 'selectedYear', 'selectedMonth', 'totalWorkingDays', 'years'
-        ));
+        return view('modules.admin.attendance.all-users-report', [
+            'usersReport' => $this->buildAllUsersReport($month),
+            'month'       => $month,
+            'service'     => $this->attendance,
+        ]);
     }
 
-    public function editAttendance(Request $request, $id)
+    /**
+     * CSV of the all-employees month — the portal had no way to get numbers
+     * out for payroll, which meant retyping them by hand.
+     */
+    public function exportMonthly(Request $request): StreamedResponse
     {
-        $this->authorize('admin');
+        $month = $this->safeMonth($request->get('month'));
+        $rows  = $this->buildAllUsersReport($month);
 
-        $attendance = Attendance::findOrFail($id);
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
 
-        $request->validate([
-            'check_in' => 'nullable|date_format:H:i',
-            'check_out' => 'nullable|date_format:H:i',
-            'status' => 'required|in:present,absent,late,half_day'
-        ]);
+            fputcsv($out, [
+                'Employee', 'Code', 'Email', 'Department', 'Working Days', 'Present',
+                'Absent', 'Leave', 'Late', 'Early Out', 'Short Hour',
+                'Worked Hours', 'Required Hours', 'Attendance %',
+            ]);
 
-        $attendance->update([
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
-            'status' => $request->status
-        ]);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r['name'], $r['code'], $r['email'], $r['department'],
+                    $r['working_days'], $r['present'], $r['absent'], $r['leave'],
+                    $r['late'], $r['early_out'], $r['short_hour'],
+                    round($r['worked_minutes'] / 60, 2),
+                    round($r['required_minutes'] / 60, 2),
+                    $r['attendance_pct'],
+                ]);
+            }
 
-        return response()->json(['message' => 'Attendance updated successfully']);
+            fclose($out);
+        }, 'attendance-' . $month . '.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    private function buildAllUsersReport(string $month): array
+    {
+        return User::where('user_role', 'user')
+            ->with('relation.department', 'relation.shiftTiming')
+            ->orderBy('full_name')
+            ->get()
+            ->map(function (User $user) use ($month) {
+                $summary = $this->attendance->monthlyReport($user, $month)['summary'];
+
+                return array_merge($summary, [
+                    'id'         => $user->id,
+                    'name'       => $user->full_name,
+                    'code'       => $user->employee_code,
+                    'email'      => $user->email,
+                    'department' => optional(optional($user->relation)->department)->name ?? '—',
+                ]);
+            })
+            ->all();
+    }
+
+    /**
+     * Guards the month filter — a hand-edited query string used to throw an
+     * unhandled parse exception straight at the user.
+     */
+    private function safeMonth(?string $month): string
+    {
+        if ($month && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)) {
+            return $month;
+        }
+
+        return now()->format('Y-m');
     }
 }

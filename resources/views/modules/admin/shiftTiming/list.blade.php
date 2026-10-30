@@ -311,7 +311,7 @@
                 var id = $(this).attr('data-id');
                 var thiss = jQuery(this);
                 jQuery.ajax({
-                    type: 'get',
+                    type: 'post',
                     url: "{{ route('shift-delete') }}",
                     data: {
                         id: id,
