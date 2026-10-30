@@ -19,3 +19,6 @@ android/.idea/
 *.aab
 *.keystore
 !debug.keystore
+
+# TypeScript incremental build cache
+*.tsbuildinfo
