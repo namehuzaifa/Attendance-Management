@@ -96,14 +96,20 @@
                                     </div>
                                     <button class="btn btn-primary w-100" tabindex="4">Sign in</button>
                                 </form>
+
+                                @if (\App\Http\Controllers\AppDownloadController::isAvailable())
+                                    <p class="text-center mt-2 mb-0">
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#appDownloadModal">
+                                            <small>📱 Get the Android app</small>
+                                        </a>
+                                    </p>
+                                @endif
                                 {{-- <p class="text-center mt-2"><span>New on our platform?</span>
                                     <a href="{{ route('register') }}"><span>&nbsp;Create an account</span></a>
                                 </p> --}}
                             </div>
                         </div>
                         <!-- /Forgot Password basic -->
-
-                        <x-app-download variant="auth" />
                     </div>
                 </div>
 
@@ -142,6 +148,8 @@
             }
         })
     </script>
+
+    <x-app-download />
 </body>
 <!-- END: Body-->
 

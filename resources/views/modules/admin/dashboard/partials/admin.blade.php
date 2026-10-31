@@ -279,13 +279,6 @@
     </div>
 </div>
 
-{{-- ----------------------------------------------------------- get the app --}}
-<div class="row">
-    <div class="col-12 mb-2">
-        <x-app-download />
-    </div>
-</div>
-
 {{-- ------------------------------------------------------------ shortcuts --}}
 <div class="row">
     <div class="col-12 mb-2">

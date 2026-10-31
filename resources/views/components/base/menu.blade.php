@@ -18,6 +18,16 @@
 
                 <li class="nav-item d-none d-lg-block"><a class="nav-link nav-link-style"><i class="ficon" data-feather="moon"></i></a></li>
 
+                @if (\App\Http\Controllers\AppDownloadController::isAvailable())
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-style" href="#" role="button"
+                           data-bs-toggle="modal" data-bs-target="#appDownloadModal"
+                           title="Get the Android app">
+                            <i class="ficon" data-feather="smartphone"></i>
+                        </a>
+                    </li>
+                @endif
+
                 {{-- <li class="nav-item dropdown dropdown-notification me-25"><a class="nav-link" href="#" data-bs-toggle="dropdown"><i class="ficon" data-feather="bell"></i><span class="badge rounded-pill bg-danger badge-up">5</span></a>
                     <ul class="dropdown-menu dropdown-menu-media dropdown-menu-end">
                         <li class="dropdown-menu-header">

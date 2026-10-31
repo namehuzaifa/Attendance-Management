@@ -45,26 +45,30 @@ class AppDownloadTest extends TestCase
         $this->assertSame("PK\x03\x04", $magic);
     }
 
-    public function test_the_login_page_offers_the_app_with_a_scannable_code(): void
+    /**
+     * A small link under the sign-in button, not a block on the page.
+     */
+    public function test_the_login_page_links_to_the_app_dialog(): void
     {
         $page = $this->get('/login')->assertOk();
 
-        $page->assertSee('Android app');
-        $page->assertSee('Download APK');
+        $page->assertSee('Get the Android app');
+        $page->assertSee('appDownloadModal', false);
         $page->assertSee(route('app.download'));
         $page->assertSee('assets/js/qrcode.js', false);
     }
 
-    public function test_both_dashboards_offer_the_app(): void
+    /**
+     * Reached from the navbar icon, so the dashboards stay uncluttered.
+     */
+    public function test_both_dashboards_reach_the_app_dialog_from_the_navbar(): void
     {
-        $this->actingAs(User::factory()->admin()->create())
-            ->get('/dashboard')
-            ->assertOk()
-            ->assertSee('Download APK');
+        foreach ([User::factory()->admin()->create(), User::factory()->create()] as $user) {
+            $page = $this->actingAs($user)->get('/dashboard')->assertOk();
 
-        $this->actingAs(User::factory()->create())
-            ->get('/dashboard')
-            ->assertOk()
-            ->assertSee('Download APK');
+            $page->assertSee('appDownloadModal', false);
+            $page->assertSee('Download APK');
+            $page->assertSee('data-feather="smartphone"', false);
+        }
     }
 }

@@ -1,53 +1,55 @@
-@props(['variant' => 'card'])
-
 @php
     use App\Http\Controllers\AppDownloadController;
 
     $available = AppDownloadController::isAvailable();
     $url = route('app.download');
     $size = AppDownloadController::size();
-    $id = 'appQr' . \Illuminate\Support\Str::random(6);
 @endphp
 
 @if ($available)
-    <div {{ $attributes->merge(['class' => 'hrms-appcta hrms-appcta--' . $variant]) }}>
-        <div class="hrms-appcta__body">
-            <div class="hrms-appcta__text">
-                <span class="hrms-appcta__badge">
-                    <i data-feather="smartphone"></i> Android app
-                </span>
+    {{-- The details live in a dialog so neither the sign-in screen nor the
+         dashboard carries a block nobody asked for. Triggered by the navbar
+         icon and by the link under the sign-in button. --}}
+    <div class="modal fade" id="appDownloadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Get the Android app</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
 
-                <h5 class="hrms-appcta__title">Mark attendance from your phone</h5>
+                <div class="modal-body text-center">
+                    <p class="mb-1" style="font-size:.88rem">
+                        Mark attendance, request leave and check your month — from your phone.
+                    </p>
 
-                <p class="hrms-appcta__sub">
-                    Scan the code with your phone's camera, or download it here.
-                    @if ($size) <span class="text-muted">({{ $size }})</span> @endif
-                </p>
+                    <div class="hrms-appcta__qr d-inline-block">
+                        <div id="appDownloadQr" title="Scan to download the HRMS app"></div>
+                    </div>
 
-                <a href="{{ $url }}" class="btn btn-primary btn-sm">
-                    <i data-feather="download" class="me-25"></i> Download APK
-                </a>
-            </div>
+                    <p class="text-muted mt-1 mb-0" style="font-size:.78rem">
+                        Scan with your phone's camera
+                    </p>
+                </div>
 
-            <div class="hrms-appcta__qr">
-                <div id="{{ $id }}" title="Scan to download the HRMS app"></div>
-                <small class="text-muted d-block text-center mt-50">Scan to install</small>
+                <div class="modal-footer flex-column align-items-stretch">
+                    <a href="{{ $url }}" class="btn btn-primary w-100">
+                        <i data-feather="download" class="me-25"></i>
+                        Download APK @if ($size) <span class="opacity-75">({{ $size }})</span> @endif
+                    </a>
+                    <p class="hrms-appcta__note text-center mb-0">
+                        Android will ask you to allow installs from this source — that is
+                        normal for an app distributed outside the Play Store.
+                    </p>
+                </div>
             </div>
         </div>
-
-        <p class="hrms-appcta__note">
-            Android will ask you to allow installs from this source — that is
-            normal for an app distributed outside the Play Store.
-        </p>
     </div>
 
-    @once
-        <script src="{{ asset('assets/js/qrcode.js') }}"></script>
-    @endonce
-
+    <script src="{{ asset('assets/js/qrcode.js') }}"></script>
     <script>
         (function () {
-            var target = document.getElementById(@json($id));
+            var target = document.getElementById('appDownloadQr');
             if (!target || typeof qrcode === 'undefined') return;
 
             // Type 0 lets the library pick the smallest version that fits.
@@ -59,8 +61,8 @@
 
             var svg = target.querySelector('svg');
             if (svg) {
-                svg.setAttribute('width', '132');
-                svg.setAttribute('height', '132');
+                svg.setAttribute('width', '170');
+                svg.setAttribute('height', '170');
             }
         })();
     </script>

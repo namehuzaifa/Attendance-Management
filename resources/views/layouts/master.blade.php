@@ -18,6 +18,8 @@
         @include('components.base.footer')
         @include('components.base.scripts')
         @yield('scripts')
+
+        <x-app-download />
     </body>
 
 </html>

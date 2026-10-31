@@ -247,8 +247,6 @@
             </div>
         </div>
 
-        <x-app-download class="mb-2" />
-
         <div class="card hrms-card mb-0">
             <div class="card-header pb-50">
                 <h4 class="card-title">Upcoming holidays</h4>
