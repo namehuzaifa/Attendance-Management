@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppDownloadController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', fn () => redirect()->route('login'))->name('home');
+
+// Public on purpose: employees scan the QR on the sign-in screen before they
+// have an account on their phone.
+Route::get('/app/download', [AppDownloadController::class, 'download'])->name('app.download');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

@@ -19,3 +19,7 @@ yarn-error.log
 /.vscode
 composer.lock.bak
 /storage/app/public/avatars
+
+# Build artefacts stay out, except the one copy the portal serves.
+*.apk
+!public/downloads/hrms-app.apk

@@ -36,6 +36,7 @@
 
     <!-- BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="{{asset('/')}}assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="{{asset('/')}}assets/css/hrms.css?v=2">
     <!-- END: Custom CSS-->
 
     <style>
@@ -101,6 +102,8 @@
                             </div>
                         </div>
                         <!-- /Forgot Password basic -->
+
+                        <x-app-download variant="auth" />
                     </div>
                 </div>
 

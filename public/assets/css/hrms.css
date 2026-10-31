@@ -375,3 +375,87 @@ html.dark-layout {
     .hrms-schedule { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .hrms-punch-meta { gap: 1.1rem; }
 }
+
+/* ------------------------------------------------------- app download CTA */
+
+.hrms-appcta {
+    border-radius: var(--hrms-radius);
+    border: 1px solid var(--hrms-border);
+    background: var(--hrms-surface);
+    box-shadow: var(--hrms-shadow);
+    padding: 1.15rem 1.25rem;
+}
+
+/* On the sign-in screen it sits under the form on a plain background. */
+.hrms-appcta--auth {
+    margin-top: 1.5rem;
+    background: rgba(115, 103, 240, 0.04);
+    border-color: rgba(115, 103, 240, 0.22);
+    box-shadow: none;
+}
+
+.hrms-appcta__body {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.hrms-appcta__text {
+    flex: 1 1 230px;
+    min-width: 0;
+}
+
+.hrms-appcta__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(115, 103, 240, 0.12);
+    color: var(--hrms-primary);
+    margin-bottom: 0.5rem;
+}
+
+.hrms-appcta__badge svg {
+    width: 13px;
+    height: 13px;
+}
+
+.hrms-appcta__title {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: var(--hrms-heading);
+}
+
+.hrms-appcta__sub {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--hrms-text);
+}
+
+.hrms-appcta__qr {
+    flex: 0 0 auto;
+}
+
+.hrms-appcta__qr svg {
+    display: block;
+    border-radius: 0.5rem;
+    background: #fff;
+    padding: 6px;
+    border: 1px solid var(--hrms-border);
+}
+
+.hrms-appcta__note {
+    margin: 0.9rem 0 0;
+    font-size: 0.75rem;
+    color: var(--hrms-muted);
+    line-height: 1.45;
+}
+
+@media (max-width: 575.98px) {
+    .hrms-appcta__body { justify-content: center; text-align: center; }
+    .hrms-appcta__text { flex-basis: 100%; }
+}
