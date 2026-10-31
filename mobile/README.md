@@ -67,16 +67,61 @@ losing it means the app can never be updated under the same listing.
 
 ## Screens
 
+The four tabs change with the signed-in role.
+
+**Employee**
+
 | Screen | What it does |
 | --- | --- |
 | Login | Email + password, plus OTP-based password reset |
 | Home | Live clock, one large punch control, month summary, recent days |
 | Attendance | Any month, day by day, with hours worked vs required |
 | Leave | Balance, request form, pending/approved history, cancel |
-| Profile | Employment details, shift, upcoming holidays, reminders, password change |
+| Profile | Employment details, shift, holidays, theme, reminders, password |
+
+**Administrator**
+
+| Screen | What it does |
+| --- | --- |
+| Today | Turnout, late/on-leave/missing counts, 14-day trend, latest punches |
+| Attendance | Any day's records, with punch locations on a map |
+| Approvals | Pending/approved/rejected leave, approve or reject with a note |
+| Profile | Theme, password, sign out |
 
 Location is attached to a punch when the employee allows it; if they decline
 or the fix times out, the punch still records.
+
+## Theme
+
+**Profile → Appearance** offers System, Light and Dark. System follows the
+phone and keeps following it if the phone flips while the app is open. Every
+colour is a CSS token, so both themes come from one stylesheet; the status bar
+and the window chrome are repainted to match.
+
+## Staying signed in
+
+Employees should sign in once and stay in. Two things make that true:
+
+- **The token is long-lived and slides.** `sanctum.expiration` is 60 days, and
+  `RefreshApiToken` pushes that window forward whenever the app talks to the
+  server, so anybody who opens the app keeps their session. A handset that
+  stops being used lapses on its own rather than holding a token forever.
+- **A lost connection is not a logout.** The app only drops a session when the
+  server actually rejects the token (401/403). Launching with no signal shows
+  the cached profile and retries, instead of bouncing to the sign-in screen —
+  which is what used to happen.
+
+To change the window, set `SANCTUM_TOKEN_EXPIRATION` (in minutes) in the
+server's `.env`.
+
+## Punch locations
+
+An administrator opening **Attendance → 📍 Location** sees where each punch was
+made. It uses Google Maps' keyless endpoints — `output=embed` for the inline
+map and `?api=1` to hand off to the Maps app — so there is nothing to bill and
+no key to manage. The sheet also reports the straight-line distance between the
+two punches and flags anything over 500 m. The portal has the same view under
+**Attendance Reports**.
 
 ## Attendance reminders
 

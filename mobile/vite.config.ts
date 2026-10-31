@@ -71,10 +71,97 @@ function demoApi(): Plugin {
     worked_minutes: 8820, required_minutes: 10080, attendance_pct: 86,
   }
 
+  // Sign in with an email containing "admin" to preview the admin side.
+  const adminUser = { ...user, id: 1, full_name: 'Bilal Ahmed', email: 'admin@iwork4sindh.com', role: 'admin' }
+
+  // Which of the two the demo is currently signed in as.
+  let current: typeof user = user
+
+  const trend = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (13 - i))
+    return { label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), present: 9 + ((i * 5) % 7), late: i % 4 }
+  })
+
   const routes: Record<string, unknown> = {
     'POST /api/login': { status: true, token: 'demo-token', user },
     'GET /api/user': { status: true, user },
     'POST /api/logout': { status: true },
+
+    'GET /api/admin/dashboard': {
+      status: true,
+      data: {
+        date: iso(today),
+        label: today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        holiday: null,
+        stats: { employees: 18, present: 14, late: 3, checked_out: 6, on_leave: 2, missing: 2, rate: 78 },
+        pending_leaves: 3,
+        recent_punches: [
+          { id: 1, name: 'Ayesha Siddiqui', check_in: '09:04 AM', check_out: null, is_late: false, status: 'On time' },
+          { id: 2, name: 'Hamza Qureshi', check_in: '09:48 AM', check_out: null, is_late: true, status: 'Late' },
+          { id: 3, name: 'Sana Malik', check_in: '08:57 AM', check_out: '05:09 PM', is_late: false, status: 'On time' },
+        ],
+        missing: [
+          { id: 4, name: 'Imran Shah', department: 'App' },
+          { id: 5, name: 'Nadia Khan', department: 'Web' },
+        ],
+        on_leave: [
+          { id: 6, name: 'Fahad Iqbal', type: 'Sick', until: '02 Nov' },
+          { id: 7, name: 'Zoya Raza', type: 'Annual', until: '05 Nov' },
+        ],
+        trend,
+      },
+    },
+
+    'GET /api/admin/employees': {
+      status: true,
+      data: [
+        { id: 7, name: 'Ayesha Siddiqui', code: 'EMP-0042', email: 'ayesha@iwork4sindh.com', department: 'Engineering', designation: 'Senior Developer', is_active: true, today: { check_in: '09:04 AM', check_out: null, is_late: false, status: 'On time' } },
+        { id: 8, name: 'Hamza Qureshi', code: 'EMP-0043', email: 'hamza@iwork4sindh.com', department: 'App', designation: 'Developer', is_active: true, today: { check_in: '09:48 AM', check_out: null, is_late: true, status: 'Late' } },
+      ],
+    },
+
+    'GET /api/admin/attendance': {
+      status: true,
+      data: {
+        date: iso(today),
+        label: today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        records: [
+          {
+            id: 1, name: 'Ayesha Siddiqui', code: 'EMP-0042',
+            check_in: '09:04 AM', check_out: '05:16 PM', worked: '8h 12m',
+            status: 'On time', is_late: false, source: 'mobile',
+            check_in_location: { lat: 24.8607343, lng: 67.0011364 },
+            check_out_location: { lat: 24.8611, lng: 67.0015 },
+          },
+          {
+            id: 2, name: 'Hamza Qureshi', code: 'EMP-0043',
+            check_in: '09:48 AM', check_out: null, worked: null,
+            status: 'Late', is_late: true, source: 'web',
+            check_in_location: null, check_out_location: null,
+          },
+        ],
+      },
+    },
+
+    'GET /api/admin/leaves': {
+      status: true,
+      data: {
+        counts: { pending: 3, approved: 12, rejected: 2 },
+        leaves: [
+          {
+            id: 1, employee: 'Ayesha Siddiqui', code: 'EMP-0042', type: 'annual', type_label: 'Annual',
+            range_label: '10 Nov – 11 Nov 2026', days: 2, reason: 'Family wedding out of town',
+            status: 'pending', admin_notes: null, approver: null, applied_on: '28 Oct 2026',
+          },
+          {
+            id: 2, employee: 'Hamza Qureshi', code: 'EMP-0043', type: 'sick', type_label: 'Sick',
+            range_label: '03 Nov – 03 Nov 2026', days: 1, reason: 'Doctor appointment',
+            status: 'pending', admin_notes: null, approver: null, applied_on: '29 Oct 2026',
+          },
+        ],
+      },
+    },
 
     'GET /api/attendance/home': {
       status: true,
@@ -180,10 +267,29 @@ function demoApi(): Plugin {
         const url = (req.url ?? '').split('?')[0]
         if (!url.startsWith('/api/')) return next()
 
-        const body = routes[`${req.method} ${url}`] ?? { status: true, message: 'Done (demo)', data: null }
+        const send = (body: unknown) => {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(body))
+        }
 
-        res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify(body))
+        // Signing in with an address containing "admin" previews the admin
+        // side; the choice sticks so /api/user agrees after a reload.
+        if (req.method === 'POST' && url === '/api/login') {
+          let raw = ''
+          req.on('data', (chunk) => { raw += chunk })
+          req.on('end', () => {
+            current = /admin/i.test(raw) ? adminUser : user
+            send({ status: true, token: 'demo-token', user: current })
+          })
+          return
+        }
+
+        if (url === '/api/user') {
+          send({ status: true, user: current })
+          return
+        }
+
+        send(routes[`${req.method} ${url}`] ?? { status: true, message: 'Done (demo)', data: null })
       })
     },
   }

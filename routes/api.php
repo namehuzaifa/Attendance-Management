@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\AttendanceController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\LeaveController;
 use App\Http\Controllers\API\ProfileController;
+use App\Http\Middleware\RefreshApiToken;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,7 +29,7 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/verify-reset-password', [AuthController::class, 'verifyAndReset']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', RefreshApiToken::class])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/reset-password', [AuthController::class, 'changePassword']);
@@ -47,5 +49,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [LeaveController::class, 'index']);
         Route::post('/', [LeaveController::class, 'store']);
         Route::post('/{id}/cancel', [LeaveController::class, 'cancel']);
+    });
+
+    // ------------------------------------------------------------- admin
+    Route::middleware('api.admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/employees', [AdminController::class, 'employees']);
+        Route::get('/employees/{id}/report', [AdminController::class, 'employeeReport']);
+        Route::get('/attendance', [AdminController::class, 'attendance']);
+        Route::get('/leaves', [AdminController::class, 'leaves']);
+        Route::post('/leaves/{id}/status', [AdminController::class, 'decideLeave']);
     });
 });

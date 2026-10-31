@@ -46,7 +46,13 @@ return [
     |
     */
 
-    'expiration' => null,
+    /*
+     * 60 days, and RefreshApiToken slides it forward on every authenticated
+     * request — so somebody who opens the app keeps their session
+     * indefinitely, while a token on a handset nobody uses dies on its own.
+     * Set SANCTUM_TOKEN_EXPIRATION to a minute count to change it.
+     */
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 60),
 
     /*
     |--------------------------------------------------------------------------

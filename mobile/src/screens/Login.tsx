@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { api, setSession, type User } from '../api'
 import { Alert } from '../ui'
+import Logo from '../Logo'
 
 type Mode = 'login' | 'forgot' | 'reset'
 
@@ -48,7 +49,7 @@ export default function Login({ onSignedIn }: { onSignedIn: (user: User) => void
 
   return (
     <form className="login" onSubmit={submit}>
-      <div className="login__mark">HR</div>
+      <Logo size={76} className="login__mark" />
 
       <h1 className="login__title">
         {mode === 'login' ? 'Welcome back' : mode === 'forgot' ? 'Reset password' : 'Enter your code'}

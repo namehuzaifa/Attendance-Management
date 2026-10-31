@@ -130,6 +130,78 @@ export type Holiday = {
   is_past: boolean
 }
 
+export type AdminDashboard = {
+  date: string
+  label: string
+  holiday: string | null
+  stats: {
+    employees: number
+    present: number
+    late: number
+    checked_out: number
+    on_leave: number
+    missing: number
+    rate: number
+  }
+  pending_leaves: number
+  recent_punches: {
+    id: number
+    name: string
+    check_in: string
+    check_out: string | null
+    is_late: boolean
+    status: string
+  }[]
+  missing: { id: number; name: string; department: string | null }[]
+  on_leave: { id: number; name: string; type: string; until: string }[]
+  trend: { label: string; present: number; late: number }[]
+}
+
+export type AdminEmployee = {
+  id: number
+  name: string
+  code: string | null
+  email: string
+  department: string | null
+  designation: string | null
+  is_active: boolean
+  today?: {
+    check_in: string | null
+    check_out: string | null
+    is_late: boolean
+    status: string
+  } | null
+}
+
+export type AdminLeave = {
+  id: number
+  employee: string
+  code: string | null
+  type: string
+  type_label: string
+  range_label: string
+  days: number
+  reason: string
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  admin_notes: string | null
+  approver: string | null
+  applied_on: string
+}
+
+export type AdminAttendanceRow = {
+  id: number
+  name: string
+  code: string | null
+  check_in: string | null
+  check_out: string | null
+  worked: string | null
+  status: string
+  is_late: boolean
+  source: string
+  check_in_location: { lat: number; lng: number } | null
+  check_out_location: { lat: number; lng: number } | null
+}
+
 export class ApiError extends Error {
   status: number
   errors?: Record<string, string[]>
@@ -312,4 +384,45 @@ export const api = {
       method: 'POST',
       body: { current_password: current, password: next, password_confirmation: next },
     }),
+
+  // ------------------------------------------------------------- admin
+  adminDashboard: () => request<{ status: boolean; data: AdminDashboard }>('/admin/dashboard'),
+
+  adminEmployees: (query?: string) =>
+    request<{ status: boolean; data: AdminEmployee[] }>(
+      `/admin/employees${query ? `?q=${encodeURIComponent(query)}` : ''}`,
+    ),
+
+  adminEmployeeReport: (id: number, month: string) =>
+    request<{
+      status: boolean
+      data: {
+        employee: AdminEmployee & { phone: string | null }
+        month: string
+        label: string
+        summary: Summary
+        days: DayRow[]
+      }
+    }>(`/admin/employees/${id}/report?month=${month}`),
+
+  adminLeaves: (status: string) =>
+    request<{
+      status: boolean
+      data: {
+        counts: { pending: number; approved: number; rejected: number }
+        leaves: AdminLeave[]
+      }
+    }>(`/admin/leaves?status=${status}`),
+
+  adminDecideLeave: (id: number, decision: 'approved' | 'rejected', notes?: string) =>
+    request<{ status: boolean; message: string }>(`/admin/leaves/${id}/status`, {
+      method: 'POST',
+      body: { status: decision, admin_notes: notes ?? null },
+    }),
+
+  adminAttendance: (date: string) =>
+    request<{
+      status: boolean
+      data: { date: string; label: string; records: AdminAttendanceRow[] }
+    }>(`/admin/attendance?date=${date}`),
 }

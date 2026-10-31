@@ -71,6 +71,58 @@ class MobileApiTest extends TestCase
             ->assertStatus(403);
     }
 
+    /**
+     * Employees should stay signed in on their phone for months, not days.
+     */
+    public function test_a_token_lasts_at_least_a_month(): void
+    {
+        $minutes = (int) config('sanctum.expiration');
+
+        $this->assertGreaterThanOrEqual(
+            60 * 24 * 30,
+            $minutes,
+            'sanctum.expiration must cover at least 30 days',
+        );
+    }
+
+    /**
+     * Sanctum dates expiry from created_at, so without the sliding refresh a
+     * daily user would still be thrown out once the window elapsed.
+     */
+    public function test_using_the_app_slides_the_token_expiry_forward(): void
+    {
+        $token = $this->employee->createToken('android');
+        $plain = $token->plainTextToken;
+
+        // Pretend this token was issued a week ago.
+        $token->accessToken->forceFill(['created_at' => now()->subDays(7)])->saveQuietly();
+
+        $this->withHeader('Authorization', "Bearer {$plain}")
+            ->getJson('/api/attendance/today')
+            ->assertOk();
+
+        $this->assertTrue(
+            $token->accessToken->fresh()->created_at->isToday(),
+            'an authenticated request should push the expiry window forward',
+        );
+    }
+
+    public function test_a_token_used_today_is_left_alone(): void
+    {
+        $token = $this->employee->createToken('android');
+        $issued = $token->accessToken->created_at;
+
+        $this->withHeader('Authorization', "Bearer {$token->plainTextToken}")
+            ->getJson('/api/attendance/today')
+            ->assertOk();
+
+        // No pointless write on every single request.
+        $this->assertSame(
+            $issued->timestamp,
+            $token->accessToken->fresh()->created_at->timestamp,
+        );
+    }
+
     public function test_protected_routes_need_a_token(): void
     {
         $this->getJson('/api/attendance/home')->assertStatus(401);

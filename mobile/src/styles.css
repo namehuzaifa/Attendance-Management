@@ -1,25 +1,120 @@
 /* ===========================================================================
-   HRMS mobile — a deliberately different skin from the web portal: dark,
-   depth-led, built around one large punch control that works with a thumb.
+   HRMS mobile — a deliberately different skin from the web portal: depth-led,
+   built around one large punch control that works with a thumb.
+
+   Dark is the base. Light is applied either by the phone's own setting (when
+   the user picked "System") or by an explicit data-theme, so every colour
+   below is a token rather than a literal.
    =========================================================================== */
 
 :root {
-    --bg: #0e0b1f;
-    --bg-soft: #16122e;
-    --surface: rgba(255, 255, 255, 0.055);
-    --surface-strong: rgba(255, 255, 255, 0.1);
-    --stroke: rgba(255, 255, 255, 0.1);
-    --text: #f3f1ff;
-    --muted: #a39fc4;
+    /* brand — identical in both themes so the app always reads as HRMS */
     --violet: #8b7cff;
     --violet-deep: #6c5ce7;
     --mint: #35e0a1;
     --amber: #ffb648;
     --rose: #ff6b81;
     --sky: #4fc8ff;
+
     --radius: 22px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* dark surfaces */
+    --bg: #0e0b1f;
+    --bg-soft: #16122e;
+    --surface: rgba(255, 255, 255, 0.055);
+    --surface-2: rgba(255, 255, 255, 0.05);
+    --stroke: rgba(255, 255, 255, 0.1);
+    --text: #f3f1ff;
+    --muted: #a39fc4;
+    --track: rgba(255, 255, 255, 0.1);
+    --field-bg: rgba(255, 255, 255, 0.06);
+    --field-bg-focus: rgba(255, 255, 255, 0.09);
+    --tab-bg: rgba(22, 18, 46, 0.86);
+    --dial-face: linear-gradient(160deg, #221c47, #15112f);
+    --dial-edge: rgba(255, 255, 255, 0.12);
+    --card-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+    --row-line: rgba(255, 255, 255, 0.06);
+    --scrim: rgba(6, 4, 16, 0.6);
+    --glow-a: rgba(139, 124, 255, 0.4);
+    --glow-b: rgba(79, 200, 255, 0.22);
+    --glow-c: rgba(108, 92, 231, 0.26);
+
+    --tint-strength: 0.16;
+}
+
+/* The phone is set to light and the user has not overridden it. */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme='dark']) {
+        --bg: #f4f3fb;
+        --bg-soft: #ffffff;
+        --surface: #ffffff;
+        --surface-2: #f7f6fd;
+        --stroke: rgba(34, 28, 71, 0.1);
+        --text: #1e1a3c;
+        --muted: #6b6889;
+        --track: rgba(34, 28, 71, 0.09);
+        --field-bg: #ffffff;
+        --field-bg-focus: #ffffff;
+        --tab-bg: rgba(255, 255, 255, 0.92);
+        --dial-face: linear-gradient(160deg, #ffffff, #f0eefb);
+        --dial-edge: rgba(34, 28, 71, 0.08);
+        --card-shadow: 0 14px 34px -24px rgba(34, 28, 71, 0.55);
+        --row-line: rgba(34, 28, 71, 0.07);
+        --scrim: rgba(30, 26, 60, 0.35);
+        --glow-a: rgba(139, 124, 255, 0.22);
+        --glow-b: rgba(79, 200, 255, 0.16);
+        --glow-c: rgba(108, 92, 231, 0.14);
+        --tint-strength: 0.13;
+    }
+}
+
+/* Explicit choices win over the phone setting. */
+:root[data-theme='light'] {
+    --bg: #f4f3fb;
+    --bg-soft: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f7f6fd;
+    --stroke: rgba(34, 28, 71, 0.1);
+    --text: #1e1a3c;
+    --muted: #6b6889;
+    --track: rgba(34, 28, 71, 0.09);
+    --field-bg: #ffffff;
+    --field-bg-focus: #ffffff;
+    --tab-bg: rgba(255, 255, 255, 0.92);
+    --dial-face: linear-gradient(160deg, #ffffff, #f0eefb);
+    --dial-edge: rgba(34, 28, 71, 0.08);
+    --card-shadow: 0 14px 34px -24px rgba(34, 28, 71, 0.55);
+    --row-line: rgba(34, 28, 71, 0.07);
+    --scrim: rgba(30, 26, 60, 0.35);
+    --glow-a: rgba(139, 124, 255, 0.22);
+    --glow-b: rgba(79, 200, 255, 0.16);
+    --glow-c: rgba(108, 92, 231, 0.14);
+    --tint-strength: 0.13;
+}
+
+:root[data-theme='dark'] {
+    --bg: #0e0b1f;
+    --bg-soft: #16122e;
+    --surface: rgba(255, 255, 255, 0.055);
+    --surface-2: rgba(255, 255, 255, 0.05);
+    --stroke: rgba(255, 255, 255, 0.1);
+    --text: #f3f1ff;
+    --muted: #a39fc4;
+    --track: rgba(255, 255, 255, 0.1);
+    --field-bg: rgba(255, 255, 255, 0.06);
+    --field-bg-focus: rgba(255, 255, 255, 0.09);
+    --tab-bg: rgba(22, 18, 46, 0.86);
+    --dial-face: linear-gradient(160deg, #221c47, #15112f);
+    --dial-edge: rgba(255, 255, 255, 0.12);
+    --card-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+    --row-line: rgba(255, 255, 255, 0.06);
+    --scrim: rgba(6, 4, 16, 0.6);
+    --glow-a: rgba(139, 124, 255, 0.4);
+    --glow-b: rgba(79, 200, 255, 0.22);
+    --glow-c: rgba(108, 92, 231, 0.26);
+    --tint-strength: 0.16;
 }
 
 * {
@@ -42,6 +137,7 @@ body {
     line-height: 1.45;
     overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Ambient light behind everything, so cards read as glass. */
@@ -51,9 +147,9 @@ body::before {
     inset: 0;
     pointer-events: none;
     background:
-        radial-gradient(70% 55% at 18% -8%, rgba(139, 124, 255, 0.4), transparent 62%),
-        radial-gradient(60% 45% at 92% 6%, rgba(79, 200, 255, 0.22), transparent 58%),
-        radial-gradient(80% 50% at 50% 104%, rgba(108, 92, 231, 0.26), transparent 65%);
+        radial-gradient(70% 55% at 18% -8%, var(--glow-a), transparent 62%),
+        radial-gradient(60% 45% at 92% 6%, var(--glow-b), transparent 58%),
+        radial-gradient(80% 50% at 50% 104%, var(--glow-c), transparent 65%);
 }
 
 button {
@@ -73,7 +169,7 @@ textarea {
     padding: 13px 15px;
     border-radius: 14px;
     border: 1px solid var(--stroke);
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--field-bg);
     outline: none;
     transition: border-color 0.18s ease, background 0.18s ease;
 }
@@ -82,12 +178,13 @@ input:focus,
 select:focus,
 textarea:focus {
     border-color: var(--violet);
-    background: rgba(255, 255, 255, 0.09);
+    background: var(--field-bg-focus);
 }
 
 input::placeholder,
 textarea::placeholder {
-    color: rgba(163, 159, 196, 0.75);
+    color: var(--muted);
+    opacity: 0.8;
 }
 
 select option {
@@ -145,6 +242,7 @@ select option {
     padding: 18px;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--card-shadow);
 }
 
 .card + .card {
@@ -203,7 +301,6 @@ select option {
     border-radius: 50%;
     background: conic-gradient(from 180deg, var(--violet), var(--sky), var(--mint), var(--violet));
     opacity: 0.85;
-    filter: blur(0.4px);
 }
 
 .dial__ring::after {
@@ -233,9 +330,9 @@ select option {
     display: grid;
     place-items: center;
     gap: 4px;
-    background: linear-gradient(160deg, #221c47, #15112f);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 40px -18px rgba(0, 0, 0, 0.9);
+    background: var(--dial-face);
+    border: 1px solid var(--dial-edge);
+    box-shadow: var(--card-shadow);
     transition: transform 0.14s ease;
 }
 
@@ -275,7 +372,7 @@ select option {
 }
 
 .punch-meta__cell {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-2);
     border: 1px solid var(--stroke);
     border-radius: 15px;
     padding: 11px 8px;
@@ -309,12 +406,12 @@ select option {
     white-space: nowrap;
 }
 
-.chip--success   { background: rgba(53, 224, 161, 0.16); color: var(--mint); }
-.chip--warning   { background: rgba(255, 182, 72, 0.16); color: var(--amber); }
-.chip--danger    { background: rgba(255, 107, 129, 0.16); color: var(--rose); }
-.chip--info      { background: rgba(79, 200, 255, 0.16); color: var(--sky); }
-.chip--primary   { background: rgba(139, 124, 255, 0.18); color: var(--violet); }
-.chip--secondary { background: rgba(163, 159, 196, 0.16); color: var(--muted); }
+.chip--success   { background: color-mix(in srgb, var(--mint) calc(var(--tint-strength) * 100%), transparent); color: color-mix(in srgb, var(--mint) 82%, var(--text)); }
+.chip--warning   { background: color-mix(in srgb, var(--amber) calc(var(--tint-strength) * 100%), transparent); color: color-mix(in srgb, var(--amber) 82%, var(--text)); }
+.chip--danger    { background: color-mix(in srgb, var(--rose) calc(var(--tint-strength) * 100%), transparent); color: color-mix(in srgb, var(--rose) 82%, var(--text)); }
+.chip--info      { background: color-mix(in srgb, var(--sky) calc(var(--tint-strength) * 100%), transparent); color: color-mix(in srgb, var(--sky) 82%, var(--text)); }
+.chip--primary   { background: color-mix(in srgb, var(--violet) calc(var(--tint-strength) * 100%), transparent); color: color-mix(in srgb, var(--violet) 82%, var(--text)); }
+.chip--secondary { background: var(--track); color: var(--muted); }
 
 /* ------------------------------------------------------------ stat grid */
 
@@ -324,11 +421,16 @@ select option {
     gap: 12px;
 }
 
+.stats--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
 .stat {
     background: var(--surface);
     border: 1px solid var(--stroke);
     border-radius: 18px;
     padding: 15px;
+    box-shadow: var(--card-shadow);
 }
 
 .stat__value {
@@ -348,7 +450,7 @@ select option {
     height: 4px;
     border-radius: 2px;
     margin-top: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--track);
     overflow: hidden;
 }
 
@@ -367,7 +469,7 @@ select option {
     margin: 0 auto;
     display: grid;
     place-items: center;
-    background: conic-gradient(var(--violet) calc(var(--value) * 1%), rgba(255, 255, 255, 0.09) 0);
+    background: conic-gradient(var(--violet) calc(var(--value) * 1%), var(--track) 0);
 }
 
 .gauge__inner {
@@ -401,7 +503,7 @@ select option {
     align-items: center;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--row-line);
 }
 
 .row:last-child {
@@ -447,6 +549,25 @@ select option {
     white-space: nowrap;
 }
 
+.row--tappable:active {
+    opacity: 0.6;
+}
+
+/* --------------------------------------------------------------- avatar */
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex: 0 0 38px;
+    background: color-mix(in srgb, var(--violet) 20%, transparent);
+    color: var(--violet);
+}
+
 /* --------------------------------------------------------------- button */
 
 .btn {
@@ -477,14 +598,21 @@ select option {
 }
 
 .btn--ghost {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--surface-2);
     border: 1px solid var(--stroke);
+    color: var(--text);
 }
 
 .btn--danger {
-    background: rgba(255, 107, 129, 0.14);
-    color: var(--rose);
-    border: 1px solid rgba(255, 107, 129, 0.3);
+    background: color-mix(in srgb, var(--rose) 14%, transparent);
+    color: color-mix(in srgb, var(--rose) 82%, var(--text));
+    border: 1px solid color-mix(in srgb, var(--rose) 30%, transparent);
+}
+
+.btn--success {
+    background: color-mix(in srgb, var(--mint) 16%, transparent);
+    color: color-mix(in srgb, var(--mint) 78%, var(--text));
+    border: 1px solid color-mix(in srgb, var(--mint) 32%, transparent);
 }
 
 .btn--sm {
@@ -502,19 +630,19 @@ select option {
     right: 12px;
     bottom: calc(var(--safe-bottom) + 12px);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 2px;
     padding: 7px;
     border-radius: 22px;
-    background: rgba(22, 18, 46, 0.86);
+    background: var(--tab-bg);
     border: 1px solid var(--stroke);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.95);
+    box-shadow: var(--card-shadow);
     z-index: 40;
 }
 
 .tab {
+    position: relative;
     display: grid;
     place-items: center;
     gap: 3px;
@@ -533,12 +661,14 @@ select option {
 
 .tab--active {
     color: var(--text);
-    background: rgba(139, 124, 255, 0.2);
+    background: color-mix(in srgb, var(--violet) 20%, transparent);
 }
 
 .tab__badge {
     position: absolute;
-    transform: translate(13px, -11px);
+    top: 4px;
+    left: 50%;
+    margin-left: 4px;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
@@ -562,16 +692,8 @@ select option {
 }
 
 .login__mark {
-    width: 66px;
-    height: 66px;
-    border-radius: 20px;
-    display: grid;
-    place-items: center;
-    font-size: 1.6rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    background: linear-gradient(145deg, var(--violet), var(--violet-deep));
-    box-shadow: 0 18px 38px -16px rgba(108, 92, 231, 0.9);
+    width: 76px;
+    height: 76px;
     margin-bottom: 20px;
 }
 
@@ -622,11 +744,26 @@ select option {
     font-size: 0.86rem;
     margin-bottom: 14px;
     line-height: 1.4;
+    border: 1px solid transparent;
 }
 
-.alert--error   { background: rgba(255, 107, 129, 0.13); color: #ffb4bf; border: 1px solid rgba(255, 107, 129, 0.26); }
-.alert--success { background: rgba(53, 224, 161, 0.13);  color: #9cf2d4; border: 1px solid rgba(53, 224, 161, 0.26); }
-.alert--info    { background: rgba(79, 200, 255, 0.12);  color: #b2e6ff; border: 1px solid rgba(79, 200, 255, 0.24); }
+.alert--error {
+    background: color-mix(in srgb, var(--rose) 13%, transparent);
+    color: color-mix(in srgb, var(--rose) 80%, var(--text));
+    border-color: color-mix(in srgb, var(--rose) 26%, transparent);
+}
+
+.alert--success {
+    background: color-mix(in srgb, var(--mint) 13%, transparent);
+    color: color-mix(in srgb, var(--mint) 76%, var(--text));
+    border-color: color-mix(in srgb, var(--mint) 26%, transparent);
+}
+
+.alert--info {
+    background: color-mix(in srgb, var(--sky) 12%, transparent);
+    color: color-mix(in srgb, var(--sky) 76%, var(--text));
+    border-color: color-mix(in srgb, var(--sky) 24%, transparent);
+}
 
 .empty {
     text-align: center;
@@ -646,9 +783,14 @@ select option {
     width: 19px;
     height: 19px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.28);
-    border-top-color: #fff;
+    border: 2px solid color-mix(in srgb, var(--text) 28%, transparent);
+    border-top-color: var(--text);
     animation: spin 0.7s linear infinite;
+}
+
+.btn--primary .spinner {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
 }
 
 @keyframes spin {
@@ -675,11 +817,12 @@ select option {
     text-align: center;
     z-index: 60;
     animation: toastIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.95);
+    box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.6);
+    color: #fff;
 }
 
-.toast--success { background: #1d7a5a; color: #eafff6; }
-.toast--error   { background: #8f2c3c; color: #ffeaee; }
+.toast--success { background: #1d7a5a; }
+.toast--error   { background: #8f2c3c; }
 
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(14px); }
@@ -692,7 +835,7 @@ select option {
     z-index: 70;
     display: flex;
     align-items: flex-end;
-    background: rgba(6, 4, 16, 0.6);
+    background: var(--scrim);
     backdrop-filter: blur(3px);
     animation: fade 0.22s ease;
 }
@@ -723,7 +866,7 @@ select option {
     width: 42px;
     height: 4px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.22);
+    background: var(--track);
     margin: 6px auto 16px;
 }
 
@@ -751,15 +894,46 @@ select option {
     border-radius: 11px;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--surface-2);
     border: 1px solid var(--stroke);
     font-size: 1.1rem;
     line-height: 1;
+    color: var(--text);
 }
 
 .month-nav__btn:disabled {
     opacity: 0.35;
 }
+
+/* --------------------------------------------------------- segmented */
+
+.segment {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+}
+
+.segment__item {
+    padding: 9px 6px;
+    border-radius: 11px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.segment__item--active {
+    background: linear-gradient(135deg, var(--violet-deep), var(--violet));
+    color: #fff;
+}
+
+/* --------------------------------------------------------- profile bits */
 
 .profile__head {
     display: flex;
@@ -776,6 +950,7 @@ select option {
     font-size: 1.3rem;
     font-weight: 700;
     background: linear-gradient(145deg, var(--violet), var(--violet-deep));
+    color: #fff;
     flex: 0 0 62px;
 }
 
@@ -784,10 +959,44 @@ select option {
     justify-content: space-between;
     gap: 14px;
     padding: 11px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--row-line);
     font-size: 0.89rem;
 }
 
 .kv:last-child { border-bottom: none; }
 .kv span:first-child { color: var(--muted); }
 .kv span:last-child { font-weight: 600; text-align: right; }
+
+/* ----------------------------------------------------------- mini chart */
+
+.spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 72px;
+    margin-top: 6px;
+}
+
+.spark__bar {
+    flex: 1;
+    min-height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: color-mix(in srgb, var(--violet) 55%, transparent);
+}
+
+.spark__bar--today {
+    background: var(--violet);
+}
+
+.spark__labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+@media (max-width: 575.98px) {
+    .punch__clock { font-size: 2.1rem; }
+    .punch-meta { gap: 1.1rem; }
+}

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="HRMS">
+  <title>HRMS</title>
+
+  <defs>
+    <linearGradient id="hrmsBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6c5ce7"/>
+      <stop offset="55%" stop-color="#8b7cff"/>
+      <stop offset="100%" stop-color="#4fc8ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle badge -->
+  <rect x="0" y="0" width="1024" height="1024" rx="232" fill="url(#hrmsBadge)"/>
+
+  <!-- Attendance ring: an open progress arc, drawn with a dash gap so the
+       sweep stays exact at any size. Circumference = 2*pi*290 ~= 1822. -->
+  <circle cx="512" cy="512" r="290"
+          fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="56"/>
+  <circle cx="512" cy="512" r="290"
+          fill="none" stroke="#ffffff" stroke-width="56" stroke-linecap="round"
+          stroke-dasharray="1367 456" transform="rotate(-90 512 512)"/>
+
+  <!-- A person, carried over from the original mark. Kept well inside the
+       ring's inner edge (radius 262) so nothing crowds at small sizes. -->
+  <circle cx="512" cy="442" r="78" fill="#ffffff"/>
+  <path d="M374 700a138 138 0 0 1 276 0z" fill="#ffffff"/>
+</svg>

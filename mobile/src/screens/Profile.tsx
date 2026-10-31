@@ -1,21 +1,29 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api, type Holiday, type User } from '../api'
 import { syncReminders } from '../notifications'
+import { THEME_CHOICES, type ThemeChoice } from '../theme'
 import { Empty, Sheet, initials } from '../ui'
+import Logo from '../Logo'
 import Reminders from './Reminders'
 
 export default function Profile({
   user,
+  theme,
+  onThemeChange,
   onToast,
   onSignOut,
 }: {
   user: User
+  theme: ThemeChoice
+  onThemeChange: (choice: ThemeChoice) => void
   onToast: (message: string, tone?: 'success' | 'error') => void
   onSignOut: () => void
 }) {
   const [holidays, setHolidays] = useState<Holiday[]>([])
   const [passwordSheet, setPasswordSheet] = useState(false)
   const [reminderSheet, setReminderSheet] = useState(false)
+
+  const isAdmin = user.role === 'admin'
 
   useEffect(() => {
     api
@@ -39,6 +47,7 @@ export default function Profile({
     <div className="screen">
       <div className="screen__head">
         <h1 className="screen__title">Profile</h1>
+        <Logo size={34} />
       </div>
 
       <div className="card">
@@ -49,31 +58,56 @@ export default function Profile({
             <div style={{ color: 'var(--muted)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user.email}
             </div>
-            {user.designation && (
-              <span className="chip chip--primary" style={{ marginTop: 7 }}>{user.designation}</span>
-            )}
+            <span className={`chip chip--${isAdmin ? 'danger' : 'primary'}`} style={{ marginTop: 7 }}>
+              {isAdmin ? 'Administrator' : user.designation ?? 'Employee'}
+            </span>
           </div>
         </div>
       </div>
 
+      {/* ---------------------------------------------------- appearance */}
       <div className="card">
-        <p className="card__title">Employment</p>
-        <div className="kv"><span>Employee code</span><span>{user.employee_code ?? '—'}</span></div>
-        <div className="kv"><span>Department</span><span>{user.department ?? '—'}</span></div>
-        <div className="kv"><span>Designation</span><span>{user.designation ?? '—'}</span></div>
-        <div className="kv"><span>Reports to</span><span>{user.manager ?? '—'}</span></div>
-        <div className="kv"><span>Joined</span><span>{user.joining_date ?? '—'}</span></div>
-        <div className="kv"><span>Phone</span><span>{user.phone ?? '—'}</span></div>
+        <p className="card__title">Appearance</p>
+
+        <div className="segment">
+          {THEME_CHOICES.map((choice) => (
+            <button
+              key={choice.value}
+              className={`segment__item ${theme === choice.value ? 'segment__item--active' : ''}`}
+              onClick={() => onThemeChange(choice.value)}
+            >
+              {choice.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="field__hint" style={{ marginTop: 9 }}>
+          {THEME_CHOICES.find((c) => c.value === theme)?.hint}
+        </p>
       </div>
 
-      {user.shift && (
-        <div className="card">
-          <p className="card__title">Shift</p>
-          <div className="kv"><span>Name</span><span>{user.shift.name}</span></div>
-          <div className="kv"><span>Timing</span><span>{user.shift.start_time} – {user.shift.end_time}</span></div>
-          <div className="kv"><span>Grace period</span><span>{user.shift.grace_period} min</span></div>
-          <div className="kv"><span>Weekly off</span><span>{user.shift.off_days.join(', ')}</span></div>
-        </div>
+      {!isAdmin && (
+        <>
+          <div className="card">
+            <p className="card__title">Employment</p>
+            <div className="kv"><span>Employee code</span><span>{user.employee_code ?? '—'}</span></div>
+            <div className="kv"><span>Department</span><span>{user.department ?? '—'}</span></div>
+            <div className="kv"><span>Designation</span><span>{user.designation ?? '—'}</span></div>
+            <div className="kv"><span>Reports to</span><span>{user.manager ?? '—'}</span></div>
+            <div className="kv"><span>Joined</span><span>{user.joining_date ?? '—'}</span></div>
+            <div className="kv"><span>Phone</span><span>{user.phone ?? '—'}</span></div>
+          </div>
+
+          {user.shift && (
+            <div className="card">
+              <p className="card__title">Shift</p>
+              <div className="kv"><span>Name</span><span>{user.shift.name}</span></div>
+              <div className="kv"><span>Timing</span><span>{user.shift.start_time} – {user.shift.end_time}</span></div>
+              <div className="kv"><span>Grace period</span><span>{user.shift.grace_period} min</span></div>
+              <div className="kv"><span>Weekly off</span><span>{user.shift.off_days.join(', ')}</span></div>
+            </div>
+          )}
+        </>
       )}
 
       <div className="card">
@@ -93,15 +127,17 @@ export default function Profile({
       </div>
 
       <div style={{ display: 'grid', gap: 11, marginTop: 16 }}>
-        <button className="btn btn--ghost" onClick={() => setReminderSheet(true)}>
-          🔔 Attendance reminders
-        </button>
+        {!isAdmin && (
+          <button className="btn btn--ghost" onClick={() => setReminderSheet(true)}>
+            🔔 Attendance reminders
+          </button>
+        )}
         <button className="btn btn--ghost" onClick={() => setPasswordSheet(true)}>Change password</button>
         <button className="btn btn--danger" onClick={signOut}>Sign out</button>
       </div>
 
       <p className="field__hint" style={{ textAlign: 'center', marginTop: 18 }}>
-        HRMS · version 1.0.0
+        HRMS · version 1.1.0
       </p>
 
       {reminderSheet && (

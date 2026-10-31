@@ -100,11 +100,35 @@ GET  /api/attendance/home       GET  /api/attendance/today
 GET  /api/attendance/month      POST /api/attendance/check-in
 POST /api/attendance/check-out  GET  /api/holidays
 GET  /api/leaves                POST /api/leaves            POST /api/leaves/{id}/cancel
+
+# administrators only (api.admin middleware; employees get a 403)
+GET  /api/admin/dashboard       GET  /api/admin/employees
+GET  /api/admin/employees/{id}/report
+GET  /api/admin/attendance      GET  /api/admin/leaves
+POST /api/admin/leaves/{id}/status
 ```
 
 Punches record latitude, longitude, IP and source (`web` / `mobile`).
 
-**Android app** — see [mobile/README.md](mobile/README.md).
+Tokens last 60 days and slide forward on use (`RefreshApiToken`), so an
+employee who opens the app stays signed in.
+
+**Punch locations** — check-in and check-out already recorded latitude and
+longitude; now an administrator can see them. A 📍 button on each attendance
+row opens the two points on a map, with the straight-line distance between
+them and a warning past 500 m. It uses Google Maps' keyless endpoints
+(`output=embed` to show, `?api=1` to hand off), so there is no API key and
+nothing to bill. Available in the portal and in the app.
+
+**One brand mark** — the portal's logo was a 270×250 stock image with the
+watermark still on it. Replaced with an SVG mark (an attendance ring around
+the person figure from the original), used for the portal logo, the favicon,
+the app's launcher icon, its splash and its notification icon — one file that
+stays sharp from 16px to 1024px.
+
+**Android app** — employee and administrator flows, light/dark/system theming,
+and sessions that survive a lost connection. See
+[mobile/README.md](mobile/README.md).
 
 ---
 

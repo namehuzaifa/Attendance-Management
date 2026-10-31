@@ -1,11 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Clock face with a tick: attendance, marked. Sits inside the adaptive
-       icon's safe zone so launchers can mask it without clipping. -->
-  <g fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="512" cy="512" r="196"/>
-    <path d="M512 392v128l84 52"/>
+  <!-- Scaled to 0.92 so the whole mark stays inside an adaptive icon's
+       safe zone when a launcher masks it to a circle or a squircle. -->
+  <g transform="translate(512 512) scale(0.92) translate(-512 -512)">
+    <circle cx="512" cy="512" r="290"
+            fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="56"/>
+    <circle cx="512" cy="512" r="290"
+            fill="none" stroke="#ffffff" stroke-width="56" stroke-linecap="round"
+            stroke-dasharray="1367 456" transform="rotate(-90 512 512)"/>
+    <circle cx="512" cy="442" r="78" fill="#ffffff"/>
+    <path d="M374 700a138 138 0 0 1 276 0z" fill="#ffffff"/>
   </g>
-  <circle cx="660" cy="660" r="96" fill="#ffffff"/>
-  <path d="M616 660l30 32 62-66" fill="none" stroke="#6c5ce7" stroke-width="34"
-        stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
