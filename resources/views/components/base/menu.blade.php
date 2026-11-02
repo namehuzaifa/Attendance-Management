@@ -19,8 +19,11 @@
                 <li class="nav-item d-none d-lg-block"><a class="nav-link nav-link-style"><i class="ficon" data-feather="moon"></i></a></li>
 
                 @if (\App\Http\Controllers\AppDownloadController::isAvailable())
+                    {{-- No `nav-link-style` here: the theme script binds that
+                         class as the dark-mode switch and rewrites the icon
+                         inside it, which turned this into a second toggle. --}}
                     <li class="nav-item">
-                        <a class="nav-link nav-link-style" href="#" role="button"
+                        <a class="nav-link hrms-app-link" href="#" role="button"
                            data-bs-toggle="modal" data-bs-target="#appDownloadModal"
                            title="Get the Android app">
                             <i class="ficon" data-feather="smartphone"></i>

@@ -71,4 +71,26 @@ class AppDownloadTest extends TestCase
             $page->assertSee('data-feather="smartphone"', false);
         }
     }
+
+    /**
+     * The theme script binds `.nav-link-style` as the dark-mode switch and
+     * rewrites the icon inside every match. Wearing that class made the app
+     * icon a second toggle: tapping it also flipped the theme, and a reload
+     * redrew it as another moon.
+     */
+    public function test_the_app_icon_is_not_wired_up_as_a_theme_toggle(): void
+    {
+        $html = $this->actingAs(User::factory()->admin()->create())
+            ->get('/dashboard')
+            ->assertOk()
+            ->getContent();
+
+        preg_match('/<a[^>]*appDownloadModal[^>]*>/', $html, $match);
+
+        $this->assertNotEmpty($match, 'the navbar should link to the app dialog');
+        $this->assertStringNotContainsString('nav-link-style', $match[0]);
+
+        // And the real toggle is still there, exactly once.
+        $this->assertSame(1, substr_count($html, 'nav-link-style'));
+    }
 }

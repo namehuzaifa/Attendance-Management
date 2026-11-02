@@ -459,3 +459,13 @@ html.dark-layout {
     .hrms-appcta__body { justify-content: center; text-align: center; }
     .hrms-appcta__text { flex-basis: 100%; }
 }
+
+/* The app link sits beside the theme toggle but must not borrow its class,
+   which the theme script claims as the dark-mode switch. */
+.hrms-app-link {
+    cursor: pointer;
+}
+
+.hrms-app-link .ficon {
+    color: inherit;
+}
