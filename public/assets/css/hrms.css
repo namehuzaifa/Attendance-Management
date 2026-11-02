@@ -469,3 +469,40 @@ html.dark-layout {
 .hrms-app-link .ficon {
     color: inherit;
 }
+
+/* ------------------------------------------------- iOS install instructions */
+
+/* iOS exposes no install API, so iPhone users get steps instead of a button. */
+.hrms-ios-install {
+    text-align: left;
+    background: rgba(115, 103, 240, 0.06);
+    border: 1px solid rgba(115, 103, 240, 0.2);
+    border-radius: 0.65rem;
+    padding: 0.85rem 1rem;
+}
+
+.hrms-ios-install__lead {
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--hrms-heading);
+    margin: 0 0 0.5rem;
+}
+
+.hrms-ios-install__steps {
+    margin: 0 0 0.6rem;
+    padding-left: 1.15rem;
+    font-size: 0.82rem;
+    color: var(--hrms-text);
+}
+
+.hrms-ios-install__steps li + li {
+    margin-top: 0.35rem;
+}
+
+.hrms-ios-install__share {
+    width: 15px;
+    height: 15px;
+    vertical-align: -3px;
+    margin: 0 1px;
+    color: #007aff; /* the system blue iOS tints the Share glyph */
+}

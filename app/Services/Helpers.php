@@ -3,6 +3,19 @@
 
 use Illuminate\Support\Str;
 
+/**
+ * Asset URL stamped with the file's modification time, so a changed
+ * stylesheet reaches browsers without anyone remembering to bump a ?v= by
+ * hand — the stale-CSS trap that hid the icon sizing rules.
+ */
+function versionedAsset(string $path): string
+{
+    $full = public_path($path);
+
+    return asset($path) . (is_file($full) ? '?v=' . filemtime($full) : '');
+}
+
+
 function navActive($route_name)
 {
     return (in_array(request()->route()->getName(), $route_name) ? "active" : '');

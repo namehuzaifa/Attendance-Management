@@ -44,14 +44,44 @@
 
                     <hr class="my-1">
 
-                    {{-- For iPhones and desktops, where the APK is no use. --}}
+                    {{-- For iPhones and desktops, where the APK is no use.
+                         Chromium offers a real install button; iOS has no such
+                         API at all, so there it becomes written steps. --}}
                     <button type="button" class="btn btn-outline-primary w-100 d-none" id="hrmsInstallWebApp">
                         <i data-feather="plus-square" class="me-25"></i> Install the web app
                     </button>
 
+                    <div class="hrms-ios-install d-none" id="hrmsIosInstall">
+                        <p class="hrms-ios-install__lead">Install on your iPhone</p>
+
+                        <ol class="hrms-ios-install__steps">
+                            <li>
+                                Tap the <strong>Share</strong> button
+                                {{-- Sized on the element too: relying on the
+                                     stylesheet alone drew it full width when
+                                     a stale CSS file was cached. --}}
+                                <svg class="hrms-ios-install__share" width="15" height="15"
+                                     viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                     stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 16V4"/>
+                                    <path d="M8 8l4-4 4 4"/>
+                                    <path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>
+                                </svg>
+                                at the bottom of Safari
+                            </li>
+                            <li>Scroll down and choose <strong>Add to Home Screen</strong></li>
+                            <li>Tap <strong>Add</strong></li>
+                        </ol>
+
+                        <p class="hrms-appcta__note mb-0">
+                            This only works in Safari — Chrome on iPhone cannot add to the
+                            home screen.
+                        </p>
+                    </div>
+
                     <p class="hrms-appcta__note text-center mb-0" id="hrmsInstallHint">
-                        Or install this site as an app — on iPhone, tap Share then
-                        <strong>Add to Home Screen</strong>.
+                        Or install this site as an app on your phone or computer.
                     </p>
                 </div>
             </div>
@@ -81,6 +111,7 @@
         (function () {
             var button = document.getElementById('hrmsInstallWebApp');
             var hint = document.getElementById('hrmsInstallHint');
+            var iosSteps = document.getElementById('hrmsIosInstall');
             if (!button) return;
 
             var standalone = window.matchMedia('(display-mode: standalone)').matches
@@ -88,7 +119,20 @@
 
             if (standalone) {
                 button.remove();
+                if (iosSteps) iosSteps.remove();
                 if (hint) hint.textContent = 'You are already using the installed app.';
+                return;
+            }
+
+            // iOS has no install API at all — Apple only allows Add to Home
+            // Screen by hand — so there the button is replaced by the steps.
+            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+            if (isIos) {
+                button.remove();
+                if (iosSteps) iosSteps.classList.remove('d-none');
+                if (hint) hint.remove();
                 return;
             }
 

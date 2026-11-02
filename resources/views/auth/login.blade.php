@@ -36,7 +36,7 @@
 
     <!-- BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="{{asset('/')}}assets/css/style.css">
-    <link rel="stylesheet" type="text/css" href="{{asset('/')}}assets/css/hrms.css?v=2">
+    <link rel="stylesheet" type="text/css" href="{{ versionedAsset('assets/css/hrms.css') }}">
     <!-- END: Custom CSS-->
 
     <style>

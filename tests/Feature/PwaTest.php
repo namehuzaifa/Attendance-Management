@@ -96,4 +96,24 @@ class PwaTest extends TestCase
             ->assertSee('Install the web app')
             ->assertSee('Add to Home Screen', false);
     }
+
+    /**
+     * Safari implements no install API — beforeinstallprompt is Chromium
+     * only — so an iPhone can never be given a working Install button. It
+     * gets the manual Share steps instead, and the script has to know the
+     * difference.
+     */
+    public function test_iphones_are_given_the_manual_steps_instead_of_a_button(): void
+    {
+        $html = $this->get('/login')->assertOk()->getContent();
+
+        $this->assertStringContainsString('hrmsIosInstall', $html);
+        $this->assertStringContainsString('iPad|iPhone|iPod', $html);
+
+        // iPad reports itself as a Mac, so touch points are the giveaway.
+        $this->assertStringContainsString('maxTouchPoints', $html);
+
+        $this->assertStringContainsString('Tap the <strong>Share</strong> button', $html);
+        $this->assertStringContainsString('only works in Safari', $html);
+    }
 }
