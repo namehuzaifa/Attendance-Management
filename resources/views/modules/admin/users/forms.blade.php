@@ -59,7 +59,13 @@
                                                     <div class="mb-1">
                                                         <label class="form-label" for="employee_code">Employee Code</label>
                                                         <input type="text" id="employee_code" class="form-control" name="employee_code"
-                                                               value="{{ $isEdit ? $user?->employee_code : old('employee_code') }}" placeholder="e.g. EMP-0042">
+                                                               value="{{ $isEdit ? $user?->employee_code : old('employee_code') }}"
+                                                               placeholder="{{ $isEdit ? 'e.g. ' . \App\Models\User::CODE_PREFIX . '0042' : \App\Models\User::nextEmployeeCode() . ' (auto)' }}">
+                                                        @unless ($isEdit)
+                                                            <small class="text-muted">
+                                                                Leave blank and the next code is assigned automatically.
+                                                            </small>
+                                                        @endunless
                                                         @error('employee_code')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                                     </div>
                                                 </div>

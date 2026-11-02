@@ -113,6 +113,21 @@ Punches record latitude, longitude, IP and source (`web` / `mobile`).
 Tokens last 60 days and slide forward on use (`RefreshApiToken`), so an
 employee who opens the app stays signed in.
 
+**Employee codes issue themselves** — the field was optional and nobody
+filled it in, so every account had none. Leave it blank and the portal
+assigns the next one (`EMP-0001` upward); a migration backfills existing
+staff in joining order. A counter in `settings` remembers the highest number
+ever issued, so removing somebody never recycles their code onto a new hire,
+and a code typed in by hand is still respected.
+
+**Installable web app** — the portal ships a manifest, icons and a service
+worker, so iPhone and desktop staff can install it from the browser the way
+Android staff install the APK. Both are offered from the same dialog. The
+worker caches only static assets and an offline notice: pages are rendered
+per signed-in user, so caching them would risk showing one employee's data
+to the next and would serve stale CSRF tokens. Installing needs HTTPS, which
+the live site has.
+
 **Punch locations** — check-in and check-out already recorded latitude and
 longitude; now an administrator can see them. A 📍 button on each attendance
 row opens the two points on a map, with the straight-line distance between

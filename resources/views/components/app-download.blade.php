@@ -41,6 +41,18 @@
                         Android will ask you to allow installs from this source — that is
                         normal for an app distributed outside the Play Store.
                     </p>
+
+                    <hr class="my-1">
+
+                    {{-- For iPhones and desktops, where the APK is no use. --}}
+                    <button type="button" class="btn btn-outline-primary w-100 d-none" id="hrmsInstallWebApp">
+                        <i data-feather="plus-square" class="me-25"></i> Install the web app
+                    </button>
+
+                    <p class="hrms-appcta__note text-center mb-0" id="hrmsInstallHint">
+                        Or install this site as an app — on iPhone, tap Share then
+                        <strong>Add to Home Screen</strong>.
+                    </p>
                 </div>
             </div>
         </div>
@@ -64,6 +76,48 @@
                 svg.setAttribute('width', '170');
                 svg.setAttribute('height', '170');
             }
+        })();
+
+        (function () {
+            var button = document.getElementById('hrmsInstallWebApp');
+            var hint = document.getElementById('hrmsInstallHint');
+            if (!button) return;
+
+            var standalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+
+            if (standalone) {
+                button.remove();
+                if (hint) hint.textContent = 'You are already using the installed app.';
+                return;
+            }
+
+            function reveal() {
+                if (window.hrmsInstallPrompt) button.classList.remove('d-none');
+            }
+
+            // The event may have fired before this dialog was parsed.
+            reveal();
+            window.addEventListener('hrms:installable', reveal);
+
+            button.addEventListener('click', async function () {
+                var prompt = window.hrmsInstallPrompt;
+                if (!prompt) return;
+
+                button.disabled = true;
+                prompt.prompt();
+
+                var choice = await prompt.userChoice.catch(function () { return null; });
+
+                // The browser only hands out one prompt per event.
+                window.hrmsInstallPrompt = null;
+                button.classList.add('d-none');
+                button.disabled = false;
+
+                if (hint && choice && choice.outcome === 'accepted') {
+                    hint.textContent = 'Installed — look for HRMS on your home screen.';
+                }
+            });
         })();
     </script>
 @endif

@@ -10,6 +10,7 @@ use App\Models\OffDay;
 use App\Models\ShiftTiming;
 use App\Models\User;
 use App\Models\UserRelation;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -288,12 +289,19 @@ class PortalSmokeTest extends TestCase
         $this->assertSame('approved', $leave->fresh()->status);
     }
 
+    /**
+     * Pinned to a mid-month Wednesday: run on the 1st or 2nd of a month and
+     * there are no past working days to report on at all.
+     */
     public function test_weekly_offs_and_holidays_are_not_counted_absent(): void
     {
-        OffDay::create(['title' => 'National Day', 'date' => now()->startOfMonth()->toDateString()]);
+        $this->travelTo(Carbon::parse('2026-06-17 10:00:00'));
+
+        // A Monday, so it does not land on a weekly off and get masked by it.
+        OffDay::create(['title' => 'National Day', 'date' => '2026-06-01']);
 
         $report = app(\App\Services\AttendanceService::class)
-            ->monthlyReport($this->employee, now()->format('Y-m'));
+            ->monthlyReport($this->employee, '2026-06');
 
         $statuses = array_column($report['days'], 'status');
 
@@ -308,11 +316,10 @@ class PortalSmokeTest extends TestCase
      */
     public function test_approved_leave_shows_as_leave_not_absence(): void
     {
-        // A working day earlier this month that nobody punched on.
-        $day = now()->startOfMonth();
-        while (in_array($day->format('l'), ['Saturday', 'Sunday']) || $day->isToday()) {
-            $day->addDay();
-        }
+        $this->travelTo(Carbon::parse('2026-06-17 10:00:00'));
+
+        // A Wednesday already past, that nobody punched on.
+        $day = Carbon::parse('2026-06-10');
 
         LeaveRequest::create([
             'user_id'    => $this->employee->id,
@@ -325,7 +332,7 @@ class PortalSmokeTest extends TestCase
         ]);
 
         $report = app(\App\Services\AttendanceService::class)
-            ->monthlyReport($this->employee, now()->format('Y-m'));
+            ->monthlyReport($this->employee, '2026-06');
 
         $row = collect($report['days'])->firstWhere('date', $day->toDateString());
 

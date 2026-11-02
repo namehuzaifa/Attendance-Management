@@ -61,6 +61,13 @@ class User extends Authenticatable
 
     protected $appends = ['avatar_url'];
 
+    /** Shape of a generated employee code, e.g. EMP-0001. */
+    public const CODE_PREFIX = 'EMP-';
+    public const CODE_PAD = 4;
+
+    /** Highest number ever issued, kept so a code is never handed out twice. */
+    public const CODE_COUNTER = 'last_employee_number';
+
     public function relation()
     {
         return $this->hasOne(UserRelation::class);
@@ -79,6 +86,52 @@ class User extends Authenticatable
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+    /**
+     * What the next employee code will be, without claiming it. Safe to call
+     * from a form to show the admin what they are about to get.
+     *
+     * Takes the higher of the rows on hand and the stored counter, so a code
+     * is not recycled onto a new hire after somebody is removed.
+     */
+    public static function nextEmployeeCode(): string
+    {
+        $fromRows = (int) static::query()
+            ->whereNotNull('employee_code')
+            ->where('employee_code', 'like', self::CODE_PREFIX . '%')
+            ->selectRaw(
+                'MAX(CAST(SUBSTRING(employee_code, ?) AS UNSIGNED)) AS n',
+                [strlen(self::CODE_PREFIX) + 1]
+            )
+            ->value('n');
+
+        $fromCounter = (int) optional(
+            Setting::where('key', self::CODE_COUNTER)->first()
+        )->value;
+
+        return self::formatEmployeeCode(max($fromRows, $fromCounter) + 1);
+    }
+
+    /**
+     * Claims the next code and remembers it, so the number is spent even if
+     * the account it was meant for is later deleted.
+     */
+    public static function issueEmployeeCode(): string
+    {
+        $code = static::nextEmployeeCode();
+
+        Setting::updateOrCreate(
+            ['key' => self::CODE_COUNTER],
+            ['value' => (int) substr($code, strlen(self::CODE_PREFIX))]
+        );
+
+        return $code;
+    }
+
+    public static function formatEmployeeCode(int $number): string
+    {
+        return self::CODE_PREFIX . str_pad((string) $number, self::CODE_PAD, '0', STR_PAD_LEFT);
     }
 
     public function offDays()

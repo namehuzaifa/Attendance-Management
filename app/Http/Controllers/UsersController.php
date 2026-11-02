@@ -10,6 +10,7 @@ use App\Models\UserRelation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -79,39 +80,57 @@ class UsersController extends Controller
             'manager_id'      => ['required_if:user_role,user', 'nullable', 'exists:users,id'],
         ]);
 
-        DB::beginTransaction();
+        // Left blank, the code is issued automatically: EMP-0001 upward.
+        $autoCode = blank($request->employee_code);
 
-        try {
-            $user = User::create([
-                'full_name'     => $request->name,
-                'employee_code' => $request->employee_code,
-                'email'         => $request->email,
-                'password'      => Hash::make($request->password),
-                'phone'         => $request->phone,
-                'joining_date'  => $request->joining_date ?: null,
-                'user_role'     => $request->user_role,
-                'is_active'     => true,
-            ]);
+        // Two admins saving at the same moment can generate the same code;
+        // the unique column catches it, so take the next one and try again.
+        for ($attempt = 1; ; $attempt++) {
+            DB::beginTransaction();
 
-            if ($request->user_role === 'user') {
-                UserRelation::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'department_id'   => $request->department_id,
-                        'designation_id'  => $request->designation_id,
-                        'shift_timing_id' => $request->shift_timing_id,
-                        'manager_id'      => $request->manager_id,
-                    ]
-                );
+            try {
+                $user = User::create([
+                    'full_name'     => $request->name,
+                    'employee_code' => $autoCode ? User::issueEmployeeCode() : $request->employee_code,
+                    'email'         => $request->email,
+                    'password'      => Hash::make($request->password),
+                    'phone'         => $request->phone,
+                    'joining_date'  => $request->joining_date ?: null,
+                    'user_role'     => $request->user_role,
+                    'is_active'     => true,
+                ]);
+
+                if ($request->user_role === 'user') {
+                    UserRelation::updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'department_id'   => $request->department_id,
+                            'designation_id'  => $request->designation_id,
+                            'shift_timing_id' => $request->shift_timing_id,
+                            'manager_id'      => $request->manager_id,
+                        ]
+                    );
+                }
+
+                DB::commit();
+
+                return redirect()->route('user-list')->with([
+                    'status'  => 'success',
+                    'message' => "User added successfully — employee code {$user->employee_code}",
+                ]);
+            } catch (QueryException $e) {
+                DB::rollBack();
+
+                if ($autoCode && $attempt < 3 && $e->getCode() === '23000') {
+                    continue;
+                }
+
+                return redirect()->back()->withInput()->with(['status' => 'failed', 'message' => $e->getMessage()]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+
+                return redirect()->back()->withInput()->with(['status' => 'failed', 'message' => $e->getMessage()]);
             }
-
-            DB::commit();
-
-            return redirect()->route('user-list')->with(['status' => 'success', 'message' => 'User added successfully']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->withInput()->with(['status' => 'failed', 'message' => $e->getMessage()]);
         }
     }
 
